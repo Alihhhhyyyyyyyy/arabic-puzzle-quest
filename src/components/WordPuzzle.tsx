@@ -1,15 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
+import { playCorrectSound } from '@/utils/audio';
 
 interface WordPuzzleProps {
   onSolve: () => void;
   difficulty: number;
 }
 
-// قائمة بالألغاز لكل مستوى صعوبة
 const puzzles = {
   1: [
     { question: "بيت ليس فيه أبواب ولا نوافذ، فما هو؟", answer: "البيضة" },
@@ -34,7 +33,6 @@ const WordPuzzle: React.FC<WordPuzzleProps> = ({ onSolve, difficulty }) => {
   const [hints, setHints] = useState(0);
   const [message, setMessage] = useState('');
   
-  // اختيار لغز عشوائي من المستوى الحالي
   useEffect(() => {
     const puzzleIndex = Math.floor(Math.random() * puzzles[difficulty as keyof typeof puzzles].length);
     setCurrentPuzzle(puzzleIndex);
@@ -49,6 +47,7 @@ const WordPuzzle: React.FC<WordPuzzleProps> = ({ onSolve, difficulty }) => {
     const correctAnswer = currentPuzzleData.answer;
     
     if (answer.trim().toLowerCase() === correctAnswer.toLowerCase()) {
+      playCorrectSound();
       toast({
         title: "إجابة صحيحة!",
         description: "أحسنت! لقد حللت اللغز بنجاح.",

@@ -1,15 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
+import { playCorrectSound } from '@/utils/audio';
 
 interface MemoryPuzzleProps {
   onSolve: () => void;
   difficulty: number;
 }
 
-// رموز للبطاقات
 const symbols = ["☀️", "🌙", "⭐", "🌟", "🌈", "🌊", "🔥", "🌪️", "🌱", "🌲", "🌴", "🌵", "🌷", "🌸"];
 
 const MemoryPuzzle: React.FC<MemoryPuzzleProps> = ({ onSolve, difficulty }) => {
@@ -18,7 +17,6 @@ const MemoryPuzzle: React.FC<MemoryPuzzleProps> = ({ onSolve, difficulty }) => {
   const [matchedPairs, setMatchedPairs] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
   
-  // إنشاء بطاقات عشوائية حسب مستوى الصعوبة
   useEffect(() => {
     const numPairs = difficulty === 1 ? 4 : difficulty === 2 ? 6 : 8;
     const selectedSymbols = [...symbols].sort(() => 0.5 - Math.random()).slice(0, numPairs);
@@ -31,29 +29,24 @@ const MemoryPuzzle: React.FC<MemoryPuzzleProps> = ({ onSolve, difficulty }) => {
   }, [difficulty]);
   
   const handleCardClick = (index: number) => {
-    // تجاهل النقر إذا كانت البطاقة مقلوبة بالفعل أو تم العثور عليها بالفعل
     if (flippedIndices.includes(index) || matchedPairs.includes(index)) {
       return;
     }
     
-    // فحص عدد البطاقات المقلوبة
     if (flippedIndices.length === 0) {
-      // قلب البطاقة الأولى
       setFlippedIndices([index]);
     } else if (flippedIndices.length === 1) {
-      // قلب البطاقة الثانية وزيادة عدد المحاولات
       const newFlippedIndices = [...flippedIndices, index];
       setFlippedIndices(newFlippedIndices);
       setMoves(moves + 1);
       
-      // فحص إذا كانت البطاقتان متطابقتين
       if (cards[flippedIndices[0]] === cards[index]) {
         const newMatchedPairs = [...matchedPairs, flippedIndices[0], index];
         setMatchedPairs(newMatchedPairs);
         setFlippedIndices([]);
         
-        // التحقق من انتهاء اللعبة
         if (newMatchedPairs.length === cards.length) {
+          playCorrectSound();
           toast({
             title: "أحسنت!",
             description: `لقد أكملت لعبة الذاكرة في ${moves + 1} محاولات.`,
@@ -68,7 +61,6 @@ const MemoryPuzzle: React.FC<MemoryPuzzleProps> = ({ onSolve, difficulty }) => {
           });
         }
       } else {
-        // إعادة قلب البطاقات بعد فترة إذا لم تكن متطابقة
         setTimeout(() => {
           setFlippedIndices([]);
         }, 1000);
@@ -83,7 +75,6 @@ const MemoryPuzzle: React.FC<MemoryPuzzleProps> = ({ onSolve, difficulty }) => {
     return "bg-gradient-to-r from-arabic-blue to-arabic-teal text-transparent";
   };
   
-  // حساب صفوف وأعمدة البطاقات حسب مستوى الصعوبة
   const gridCols = difficulty === 1 ? "grid-cols-4" : "grid-cols-4";
   
   return (

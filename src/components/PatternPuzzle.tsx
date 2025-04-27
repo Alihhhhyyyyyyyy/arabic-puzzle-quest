@@ -1,15 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
+import { playCorrectSound } from '@/utils/audio';
 
 interface PatternPuzzleProps {
   onSolve: () => void;
   difficulty: number;
 }
 
-// أنماط اللغز حسب مستوى الصعوبة
 const patterns = {
   1: [
     { sequence: ["🔴", "🔵", "🔴", "🔵", "?"], answer: "🔴" },
@@ -50,7 +49,6 @@ const PatternPuzzle: React.FC<PatternPuzzleProps> = ({ onSolve, difficulty }) =>
   const [currentPattern, setCurrentPattern] = useState(0);
   const [selected, setSelected] = useState('');
   
-  // اختيار نمط عشوائي من المستوى الحالي
   useEffect(() => {
     const patternIndex = Math.floor(Math.random() * patterns[difficulty as keyof typeof patterns].length);
     setCurrentPattern(patternIndex);
@@ -64,6 +62,7 @@ const PatternPuzzle: React.FC<PatternPuzzleProps> = ({ onSolve, difficulty }) =>
     setSelected(option);
     
     if (option === currentPatternData.answer) {
+      playCorrectSound();
       toast({
         title: "إجابة صحيحة!",
         description: "أحسنت! لقد وجدت النمط الصحيح.",

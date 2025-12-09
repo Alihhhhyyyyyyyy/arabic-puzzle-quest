@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>لعبة الألغاز العربية المتطورة</title>
+<!-- إضافة Google Sign-In API -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600&display=swap');
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    font-family: 'Cairo', sans-serif;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 15px;
+    transition: background 0.5s ease;
+  }
+  
+  body.dark-mode {
+    background: linear-gradient(135deg, #2c3e50, #3498db);
+  }
+  
+  #game-container {
+    background: #2a2258;
+    border-radius: 20px;
+    width: 420px;
+    max-width: 100%;
+    padding: 25px 20px;
+    box-shadow: 0 0 30px rgba(118, 75, 162, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: filter 0.3s ease, transform 0.3s, background 0.5s;
+    position: relative;
+  }
+  
+  body.dark-mode #game-container {
+    background: #1a252f;
+  }
+  
+  #game-container.blurred {
+    filter: blur(3px);
+  }
+  
+  h1 {
+    font-weight: 700;
+    font-size: 1.8rem;
+    margin: 0 0 20px 0;
+    user-select: none;
+    text-align: center;
+  }
+  
+  /* Login Screen Styles */
+  #login-screen {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  #login-screen p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+  }
+  
+  #g_id_signin {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+  
+  #guest-signin-btn {
+    background: #4CAF50;
+    color: #fff;
+    padding: 12px 25px;
+    border-radius: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    border: none;
+    transition: background 0.3s;
+  }
+  
+  #guest-signin-btn:hover {
+    background: #45a049;
+  }
+  
+  /* Menu Button Styles */
+  #menu-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #5a4a99;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background 0.3s, transform 0.2s;
+  }
+  
+  #menu-btn:hover {
+    background: #6a5acd;
+    transform: scale(1.1);
+  }
+  
+  #menu-btn:focus {
+    outline: none;
+  }
+  
+  /* Side Menu Styles */
+  #side-menu {
+    position: fixed;
+    top: 0;
+    right: -250px;
+    width: 250px;
+    height: 100%;
+    background: #f5f7fa;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+    transition: right 0.3s ease;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    padding-top: 20px;
+  }
+  
+  #side-menu.open {
+    right: 0;
+  }
+  
+  #side-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  #side-menu-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #333;
+  }
+  
+  #user-info {
+    color: #333;
+    font-size: 1rem;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+  }
+  
+  #close-menu-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #333;
+  }
+  
+  .menu-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    color: #333;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background 0.3s;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .menu-item:hover {
+    background: #e0e4e9;
+  }
+  
+  .menu-item .icon {
+    margin-left: 10px;
+    font-size: 1.5rem;
+    width: 30px;
+    text-align: center;
+  }
+  
+  .menu-item.green .icon { color: #28a745; }
+  .menu-item.red .icon { color: #dc3545; }
+  .menu-item.gray .icon { color: #6c757d; }
+  .menu-item.yellow .icon { color: #ffc107; }
+  .menu-item.pink .icon { color: #ff6f61; }
+  .menu-item.blue .icon { color: #007bff; }
+  .menu-item.purple .icon { color: #800080; }
+  
+  /* Overlay Styles */
+  #overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 150;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+  
+  #overlay.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  /* Modal Styles for Settings, Stats, and Add Friend */
+  .modal {
+    display: none;
+    background: #3b3270;
+    border-radius: 15px;
+    padding: 20px;
+    width: 100%;
+    max-width: 380px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    z-index: 100;
+  }
+  
+  body.dark-mode .modal {
+    background: #2c3e50;
+  }
+  
+  .modal.visible {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .modal h2 {
+    margin: 0 0 15px;
+    font-size: 1.5rem;
+    text-align: center;
+  }
+  
+  .modal-content {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .close-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #f44336;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  .close-btn:hover {
+    background: #d32f2f;
+  }
+  
+  /* Volume Slider Styles */
+  .volume-control {
+    margin: 15px 0;
+  }
+  
+  #volume-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 8px;
+    background: #444070;
+    border-radius: 5px;
+    outline: none;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  
+  #volume-slider:hover {
+    opacity: 1;
+  }
+  
+  #volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #ffb347;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  
+  #volume-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #ffb347;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  
+  #topic-selection, #difficulty-selection, #game-play, #end-screen, #login-screen {
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .visible {
+    display: flex !important;
+  }
+  
+  .btn {
+    background: #ffb347;
+    border: none;
+    padding: 12px 25px;
+    font-size: 1.2rem;
+    border-radius: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    color: #482b0e;
+    margin: 8px 0;
+    box-shadow: 0 5px 0 #cc8c2b inset;
+    width: 100%;
+    user-select: none;
+    transition: background 0.3s ease;
+  }
+  
+  .btn:hover {
+    background: #ff9f1c;
+  }
+  
+  #progress {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    user-select: none;
+  }
+  
+  #timer-container {
+    width: 100%;
+    height: 10px;
+    background: #444070;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  
+  #timer-bar {
+    width: 100%;
+    height: 100%;
+    background: #ffb347;
+    transition: width 1s linear;
+  }
+  
+  #question {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    min-height: 90px;
+    text-align: center;
+    user-select: none;
+    line-height: 1.5;
+  }
+  
+  #choices {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .choice-btn {
+    background: #5a4a99;
+    padding: 12px 20px;
+    border-radius: 15px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    color: #fff;
+    text-align: center;
+    user-select: none;
+    transition: transform 0.2s, background 0.3s;
+  }
+  
+  .choice-btn:hover {
+    transform: translateY(-2px);
+    background: #6a5acd;
+  }
+  
+  .choice-btn.correct {
+    background: #4CAF50;
+    color: white;
+    animation: flash 0.5s;
+  }
+  
+  .choice-btn.incorrect {
+    background: #f44336;
+    color: white;
+  }
+  
+  @keyframes flash {
+    0%, 100% { background: #4CAF50; }
+    50% { background: #7FFF00; }
+  }
+  
+  #feedback {
+    margin-top: 15px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    min-height: 28px;
+    text-align: center;
+    user-select: none;
+  }
+  
+  #score, #high-score {
+    margin-top: 15px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    user-select: none;
+  }
+  
+  #hint-btn {
+    margin-top: 12px;
+    background: #4fc3f7;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 15px;
+    font-weight: 700;
+    color: #003f5c;
+    cursor: pointer;
+    user-select: none;
+    width: 100%;
+    transition: background 0.3s;
+  }
+  
+  #hint-btn:hover {
+    background: #29b6f6;
+  }
+  
+  #hint-btn:disabled {
+    background: #b0bec5;
+    cursor: not-allowed;
+  }
+  
+  #combo-counter {
+    font-size: 1rem;
+    margin-top: 5px;
+    user-select: none;
+    color: #fff9c4;
+  }
+  
+  #level-container {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+  
+  #xp-bar {
+    height: 100%;
+    width: 0%;
+    background: #4CAF50;
+    border-radius: 5px;
+    transition: width 0.5s ease;
+  }
+  
+  #leaderboard {
+    width: 100%;
+    margin-top: 20px;
+    display: none;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 10px;
+  }
+  
+  .leaderboard-entry {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .leaderboard-entry.top-three {
+    background: rgba(255, 215, 0, 0.1);
+    font-weight: bold;
+    border-radius: 5px;
+    padding: 8px 10px;
+  }
+  
+  .leaderboard-entry:last-child {
+    border-bottom: none;
+  }
+  
+  .achievement-popup {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #FFD700;
+    color: #000;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    z-index: 100;
+    animation: slideIn 0.5s forwards;
+    max-width: 300px;
+  }
+  
+  .daily-reward-popup {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #28a745;
+    color: #fff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    z-index: 100;
+    animation: slideDown 0.5s forwards;
+    max-width: 90%;
+  }
+  
+  .level-up-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.7);
+    z-index: 1000;
+    text-align: center;
+    animation: pulse 1.5s infinite;
+    max-width: 90%;
+    width: 300px;
+  }
+  
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes slideDown {
+    from { transform: translate(-50%, -100%); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.05); }
+  }
+  
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+    20%, 40%, 60%, 80% { transform: translateX(10px); }
+  }
+  
+  @keyframes fall {
+    to { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+  }
+  
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background-color: #FFD700;
+    border-radius: 50%;
+    z-index: 1000;
+    animation: fall 2s linear forwards;
+    pointer-events: none;
+  }
+  
+  #badges-section {
+    border-top: 1px solid #ddd;
+    margin-top: 15px;
+    padding-top: 15px;
+    display: none;
+    width: 100%;
+  }
+  
+  .badge-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background: #e0e4e9;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    color: #333;
+  }
+  
+  .badge-item span:first-child {
+    font-weight: bold;
+  }
+  
+  .badge-item span:last-child {
+    font-size: 1.8rem;
+    margin-left: 10px;
+  }
+  
+  /* Style for settings checkboxes */
+  .modal-content label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+    cursor: pointer;
+  }
+  
+  .modal-content input[type="checkbox"] {
+    margin-left: 10px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+  
+  @media (max-width: 450px) {
+    #game-container {
+      width: 100%;
+      padding: 20px 15px;
+    }
+    
+    h1 {
+      font-size: 1.5rem;
+    }
+    
+    #question {
+      font-size: 1.2rem;
+      min-height: 70px;
+    }
+    
+    .btn {
+      font-size: 1rem;
+      padding: 15px;
+      margin: 10px 0;
+    }
+    
+    .choice-btn {
+      padding: 15px 10px;
+      font-size: 1rem;
+      margin: 5px 0;
+    }
+    
+    #menu-btn {
+      top: 10px;
+      right: 10px;
+      width: 35px;
+      height: 35px;
+      font-size: 1rem;
+    }
+    
+    .modal {
+      width: 90%;
+      padding: 15px;
+    }
+    
+    .modal h2 {
+      font-size: 1.3rem;
+    }
+    
+    #side-menu {
+      width: 200px;
+      right: -200px;
+    }
+    
+    #side-menu.open {
+      right: 0;
+    }
+    
+    .menu-item {
+      font-size: 1rem;
+      padding: 12px 15px;
+    }
+    
+    .menu-item .icon {
+      font-size: 1.3rem;
+      width: 25px;
+    }
+    
+    .level-up-popup {
+      width: 90%;
+      padding: 20px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Overlay -->
+<div id="overlay"></div>
+
+<div id="game-container">
+  <h1>لعبة الألغاز العربية</h1>
+  
+  <!-- Menu Button -->
+  <button id="menu-btn">☰</button>
+  
+  <!-- نظام المستويات -->
+  <div id="level-container">
+    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+      <span id="level-display">المستوى: 1</span>
+      <span id="xp-display">0/100 XP</span>
+    </div>
+    <div style="width:100%; height:10px; background:#444070; border-radius:5px;">
+      <div id="xp-bar"></div>
+    </div>
+  </div>
+  
+  <!-- Login Screen -->
+  <section id="login-screen" class="visible">
+    <p>مرحبًا! سجل الدخول بحسابك:</p>
+    <div id="g_id_signin" 
+         data-type="standard"
+         data-size="large"
+         data-theme="outline"
+         data-text="sign_in_with"
+         data-shape="rectangular"
+         data-logo_alignment="left">
+    </div>
+    <button id="guest-signin-btn">تسجيل كضيف</button>
+  </section>
+  
+  <!-- Topic Selection -->
+  <section id="topic-selection">
+    <p style="margin-bottom:15px; font-size:1.2rem; font-weight:600;">اختر موضوع الأسئلة:</p>
+    <button class="btn" data-topic="general">ثقافة عامة</button>
+    <button class="btn" data-topic="science">علوم</button>
+    <button class="btn" data-topic="history">تاريخ</button>
+    <button class="btn" data-topic="sports">رياضة</button>
+    <button id="daily-challenge-btn" class="btn" style="background:#4CAF50; display:none;">التحدي اليومي</button>
+  </section>
+  
+  <!-- Difficulty Selection -->
+  <section id="difficulty-selection">
+    <p style="margin-bottom:15px; font-size:1.2rem; font-weight:600;">اختر مستوى الصعوبة:</p>
+    <button class="btn" data-difficulty="easy">سهل</button>
+    <button class="btn" data-difficulty="medium">متوسط</button>
+    <button class="btn" data-difficulty="hard">صعب</button>
+  </section>
+  
+  <!-- Game Play -->
+  <section id="game-play">
+    <div id="progress"></div>
+    <div id="timer-container">
+      <div id="timer-bar"></div>
+    </div>
+    <div id="question"></div>
+    <div id="choices"></div>
+    <button id="hint-btn">(3) نقاط التلميح المتبقية</button>
+    <div id="feedback"></div>
+    <div id="combo-counter"></div>
+    <div id="score"></div>
+    <div id="high-score"></div>
+    <button id="restart-btn" class="btn">إعادة تشغيل اللعبة</button>
+    <button id="watch-ad-btn" class="btn" style="display:none;">شاهد إعلانًا للحصول على تلميح</button>
+  </section>
+  
+  <!-- End Screen -->
+  <section id="end-screen" style="display:none;">
+    <div id="end-feedback"></div>
+    <button id="restart-game-btn" class="btn">إعادة اللعب</button>
+    <button id="share-result-btn" class="btn">مشاركة النتيجة</button>
+  </section>
+  
+  <!-- Settings Modal -->
+  <section id="settings-modal" class="modal">
+    <button class="close-btn">×</button>
+    <h2>الإعدادات</h2>
+    <div class="modal-content">
+      <label>
+        <input type="checkbox" id="sound-toggle"> تفعيل الصوت
+      </label>
+      <div class="volume-control">
+        <label for="volume-slider">مستوى الصوت:</label>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1">
+      </div>
+      <label>
+        <input type="checkbox" id="dark-mode-toggle"> الوضع الليلي
+      </label>
+      <br>
+      <button class="btn" id="save-settings-btn">حفظ الإعدادات</button>
+    </div>
+  </section>
+  
+  <!-- Stats Modal -->
+  <section id="stats-modal" class="modal">
+    <button class="close-btn">×</button>
+    <h2>الإحصائيات</h2>
+    <div class="modal-content">
+      <p>المستوى الحالي: <span id="stats-level"></span></p>
+      <p>إجمالي النقاط: <span id="stats-score"></span></p>
+      <p>أعلى نتيجة: <span id="stats-high-score"></span></p>
+      <p>الإنجازات المكتملة: <span id="stats-achievements"></span></p>
+      <p>إجمالي الأسئلة الصحيحة: <span id="stats-total-correct"></span></p>
+      <p>عدد الأيام المتتالية: <span id="stats-streak"></span></p>
+      <div id="badges-section">
+        <h3>الشارات</h3>
+        <div id="badges-list"></div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Add Friend Modal -->
+  <section id="add-friend-modal" class="modal">
+    <button class="close-btn">×</button>
+    <h2>إضافة صديق</h2>
+    <div class="modal-content">
+      <input type="text" id="friend-input" placeholder="اسم المستخدم أو البريد الإلكتروني">
+      <button class="btn" id="add-friend-submit">إضافة</button>
+    </div>
+  </section>
+  
+  <!-- لوحة المتصدرين -->
+  <div id="leaderboard"></div>
+</div>
+
+<!-- Side Menu -->
+<div id="side-menu">
+  <div id="side-menu-header">
+    <h2>الإعدادات</h2>
+    <button id="close-menu-btn">×</button>
+  </div>
+  <div id="user-info"></div>
+  <div class="menu-item green" id="menu-free-play"><span class="icon">🎮</span>اللعب الحر</div>
+  <div class="menu-item purple" id="menu-speed-mode"><span class="icon">⚡</span>وضع الألغاز السريعة</div>
+  <div class="menu-item green" id="menu-challenges"><span class="icon">🏆</span>التحديات</div>
+  <div class="menu-item red" id="menu-game"><span class="icon">🔄</span>إعادة اللعب</div>
+  <div class="menu-item gray" id="menu-stats"><span class="icon">📊</span>الإحصائيات</div>
+  <div class="menu-item yellow" id="menu-settings"><span class="icon">⚙️</span>الإعدادات</div>
+  <div class="menu-item pink" id="menu-add-friend"><span class="icon">👥</span>دعوة أصدقاء</div>
+  <div class="menu-item blue" id="menu-rate"><span class="icon">⭐</span>تقييم التطبيق</div>
+  <div class="menu-item gray" id="menu-offline-mode"><span class="icon">📴</span>وضع بدون إنترنت</div>
+  <div class="menu-item red" id="menu-logout"><span class="icon">🚪</span>تسجيل الخروج</div>
+</div>
+
+<script>
+  // Database of questions by topics and difficulty (expanded with more questions)
+  const questionsDB = {
+    general: {
+      easy: [
+        { question: "ما هو أكبر كوكب في النظام الشمسي؟", choices: ["الأرض", "المريخ", "المشتري", "الزهرة"], answer: "المشتري", hint: "إنه كوكب عملاق غازي." },
+        { question: "كم عدد أيام الأسبوع؟", choices: ["5", "6", "7", "8"], answer: "7", hint: "عدد الأيام يأتي بعد 6." },
+        { question: "ما هي عاصمة مصر؟", choices: ["الإسكندرية", "القاهرة", "الجيزة", "بورسعيد"], answer: "القاهرة", hint: "تقع على ضفاف نهر النيل." },
+        { question: "ما هو لون السماء في يوم مشمس؟", choices: ["أحمر", "أخضر", "أزرق", "أصفر"], answer: "أزرق", hint: "يرتبط بالغلاف الجوي." },
+        { question: "ما هو أكبر محيط في العالم؟", choices: ["الهادئ", "الأطلسي", "الهندي", "القطبي"], answer: "الهادئ", hint: "يغطي أكثر من ثلث سطح الأرض." },
+        { question: "كم عدد القارات المأهولة؟", choices: ["4", "5", "6", "7"], answer: "6", hint: "القارة القطبية غير مأهولة." },
+        { question: "ما هو اسم العملة في السعودية؟", choices: ["دينار", "ريال", "درهم", "جنيه"], answer: "ريال", hint: "مثل عملة قطر." },
+        { question: "ما هي اللغة الرسمية للبرازيل؟", choices: ["الإسبانية", "الإنجليزية", "البرتغالية", "الفرنسية"], answer: "البرتغالية", hint: "مستعمرة سابقة لدولة أوروبية." },
+        { question: "ما هو أطول يوم في السنة؟", choices: ["21 يونيو", "21 ديسمبر", "15 مارس", "30 سبتمبر"], answer: "21 يونيو", hint: "يحدث في الانقلاب الصيفي." },
+        { question: "ما هو اسم أكبر دولة في العالم من حيث المساحة؟", choices: ["الصين", "روسيا", "كندا", "الولايات المتحدة"], answer: "روسيا", hint: "تمتد عبر قارتين." }
+      ],
+      medium: [
+        { question: "ما هي عاصمة المغرب؟", choices: ["الدار البيضاء", "الرباط", "مراكش", "فاس"], answer: "الرباط", hint: "هي مدينة ساحلية تقع على المحيط الأطلسي." },
+        { question: "من هو مؤلف كتاب 'الأيام'؟", choices: ["نجيب محفوظ", "طه حسين", "توفيق الحكيم", "يوسف إدريس"], answer: "طه حسين", hint: "لقب بعميد الأدب العربي." },
+        { question: "ما هو اسم أكبر صحراء في العالم؟", choices: ["الصحراء الكبرى", "صحراء جوبي", "صحراء كالاهاري", "صحراء أنتاركتيكا"], answer: "صحراء أنتاركتيكا", hint: "تقع في قارة باردة جدًا." },
+        { question: "ما هي عاصمة أستراليا؟", choices: ["سيدني", "ملبورن", "كانبيرا", "بريزبن"], answer: "كانبيرا", hint: "ليست أكبر مدن أستراليا." },
+        { question: "ما هو اسم أطول سلسلة جبال في العالم؟", choices: ["الأنديز", "الهيمالايا", "الروكي", "الألب"], answer: "الأنديز", hint: "تقع في أمريكا الجنوبية." },
+        { question: "من هو العالم الذي اكتشف الجاذبية؟", choices: ["نيوتن", "آينشتاين", "غاليليو", "تسلا"], answer: "نيوتن", hint: "يقال إنه استوحى فكرته من سقوط تفاحة." },
+        { question: "ما هي عاصمة اليابان؟", choices: ["طوكيو", "أوساكا", "كيوتو", "هيروشيما"], answer: "طوكيو", hint: "أكبر مدينة في اليابان." },
+        { question: "ما هو اسم أقدم جامعة في العالم؟", choices: ["الأزهر", "بولونيا", "أكسفورد", "القرويين"], answer: "القرويين", hint: "تقع في المغرب." }
+      ],
+      hard: [
+        { question: "كم عدد المرات التي تدور الأرض حول الشمس في السنة؟", choices: ["1", "2", "4", "12"], answer: "1", hint: "مرة واحدة فقط." },
+        { question: "ما هو أطول نهر في العالم؟", choices: ["نهر النيل", "نهر الأمازون", "نهر اليانغتسي", "نهر المسيسيبي"], answer: "نهر الأمازون", hint: "يقع في قارة أمريكا الجنوبية." },
+        { question: "ما هو اسم أول إنسان سار على القمر؟", choices: ["نيل أرمسترونغ", "بز ألدرين", "يوري غاغارين", "جون جلين"], answer: "نيل أرمسترونغ", hint: "قال جملة مشهورة عن خطوة صغيرة." },
+        { question: "ما هي عاصمة كازاخستان؟", choices: ["ألماتي", "نور سلطان", "بيشكيك", "دوشانبي"], answer: "نور سلطان", hint: "تم تغيير اسمها تكريمًا لرئيس سابق." },
+        { question: "ما هو اسم أقدم حضارة معروفة؟", choices: ["السومرية", "المصرية", "الهندية", "الصينية"], answer: "السومرية", hint: "نشأت في بلاد الرافدين." },
+        { question: "ما هو اسم العملة في الهند؟", choices: ["روبية", "ين", "دولار", "يورو"], answer: "روبية", hint: "تستخدم أيضًا في دول أخرى." },
+        { question: "ما هي الدولة التي استضافت أول أولمبياد؟", choices: ["فرنسا", "اليونان", "بريطانيا", "الولايات المتحدة"], answer: "اليونان", hint: "مهد الألعاب الأولمبية." }
+      ]
+    },
+    science: {
+      easy: [
+        { question: "ما هو الحيوان الذي يسمى ملك الغابة؟", choices: ["النمر", "الأسد", "الفهد", "الفيل"], answer: "الأسد", hint: "له عرف كثيف." },
+        { question: "ما هو الغاز الذي نتنفسه؟", choices: ["الأكسجين", "ثاني أكسيد الكربون", "النيتروجين", "الهيدروجين"], answer: "الأكسجين", hint: "يشكل حوالي 21% من الغلاف الجوي." },
+        { question: "ما هو أكبر عضو في جسم الإنسان؟", choices: ["القلب", "الكبد", "الجلد", "الرئة"], answer: "الجلد", hint: "يغطي الجسم بالكامل." },
+        { question: "ما هو لون الدم داخل الجسم؟", choices: ["أزرق", "أحمر", "أخضر", "أصفر"], answer: "أحمر", hint: "بسبب الهيموغلوبين." },
+        { question: "ما هو اسم الكوكب الأحمر؟", choices: ["المريخ", "المشتري", "الزهرة", "عطارد"], answer: "المريخ", hint: "يشتهر بلونه المحمر." },
+        { question: "ما هي الوحدة التي تقيس الوزن؟", choices: ["متر", "كيلوغرام", "لتر", "ثانية"], answer: "كيلوغرام", hint: "تستخدم لقياس الكتلة." },
+        { question: "ما هو المكون الرئيسي للماء؟", choices: ["الهيدروجين", "الكربون", "النيتروجين", "الكبريت"], answer: "الهيدروجين", hint: "يوجد مع الأكسجين في جزيء الماء." },
+        { question: "ما هو اسم الكوكب الذي يحتوي على حلقات؟", choices: ["المريخ", "زحل", "المشتري", "الأرض"], answer: "زحل", hint: "له حلقات بارزة." }
+      ],
+      medium: [
+        { question: "ما هو الغاز الذي تحتاجه معظم الكائنات الحية للبقاء؟", choices: ["النيتروجين", "الهيليوم", "الأكسجين", "ثاني أكسيد الكربون"], answer: "الأكسجين", hint: "رمزه الكيميائي O." },
+        { question: "ما هو أقرب كوكب إلى الشمس؟", choices: ["الزهرة", "الأرض", "المريخ", "عطارد"], answer: "عطارد", hint: "أصغر كوكب في النظام الشمسي." },
+        { question: "ما هو العنصر الأكثر وفرة في الغلاف الجوي؟", choices: ["الأكسجين", "النيتروجين", "الهيدروجين", "الأرجون"], answer: "النيتروجين", hint: "يشكل حوالي 78% من الغلاف الجوي." },
+        { question: "ما هو اسم العضو الذي يضخ الدم؟", choices: ["الكبد", "القلب", "الكلية", "الرئة"], answer: "القلب", hint: "ينبض باستمرار." },
+        { question: "ما هو مصدر الطاقة الرئيسي للأرض؟", choices: ["الرياح", "الشمس", "الماء", "الفحم"], answer: "الشمس", hint: "يسبب الدورة المائية." },
+        { question: "ما هو اسم العنصر الذي يرمز له بـ Fe؟", choices: ["الحديد", "الذهب", "الفضة", "النحاس"], answer: "الحديد", hint: "يستخدم في صناعة الفولاذ." },
+        { question: "ما هي السرعة التي ينتقل بها الضوء؟", choices: ["300,000 كم/ث", "150,000 كم/ث", "500,000 كم/ث", "1,000 كم/ث"], answer: "300,000 كم/ث", hint: "السرعة القصوى في الكون." }
+      ],
+      hard: [
+        { question: "ما هي وحدة قياس شدة التيار الكهربائي؟", choices: ["الفولت", "الأمبير", "الأوم", "الواط"], answer: "الأمبير", hint: "سميت على اسم عالم فرنسي." },
+        { question: "ما هو اسم الجسيم الأساسي للضوء؟", choices: ["الإلكترون", "الفوتون", "البروتون", "النيوترون"], answer: "الفوتون", hint: "له طبيعة موجية وجسيمية." },
+        { question: "ما هو العنصر الكيميائي الأكثر وفرة في الكون؟", choices: ["الأكسجين", "الهيدروجين", "الكربون", "الحديد"], answer: "الهيدروجين", hint: "يشكل معظم النجوم." },
+        { question: "ما هو اسم القانون الذي ينص على أن لكل فعل رد فعل؟", choices: ["قانون نيوتن الأول", "قانون نيوتن الثالث", "قانون أوم", "قانون بويل"], answer: "قانون نيوتن الثالث", hint: "يتعلق بالقوى." },
+        { question: "ما هو اسم النظرية التي تشرح أصل الكون؟", choices: ["الانفجار العظيم", "النسبية العامة", "الكم", "التطور"], answer: "الانفجار العظيم", hint: "حدث منذ حوالي 13.8 مليار سنة." },
+        { question: "ما هو اسم الجسيم المسؤول عن نقل القوة النووية القوية؟", choices: ["الفوتون", "الغلوون", "البوزون", "الكوارك"], answer: "الغلوون", hint: "مرتبط بالقوة النووية." },
+        { question: "ما هو اسم المادة التي تشكل النجوم النيوترونية؟", choices: ["البلازما", "النيوترونات", "البروتونات", "الإلكترونات"], answer: "النيوترونات", hint: "تشكل أجسامًا كثيفة جدًا." }
+      ]
+    }, 
+    history: {
+      easy: [
+        { question: "في أي عام انتهت الحرب العالمية الثانية؟", choices: ["1943", "1945", "1950", "1939"], answer: "1945", hint: "بعد 6 سنوات من بدايتها." },
+        { question: "من هو الخليفة الأول في الإسلام؟", choices: ["عمر بن الخطاب", "أبو بكر الصديق", "علي بن أبي طالب", "عثمان بن عفان"], answer: "أبو بكر الصديق", hint: "كان صديق النبي محمد." },
+        { question: "ما هي المدينة التي كانت عاصمة الدولة الأموية؟", choices: ["دمشق", "بغداد", "القاهرة", "المدينة"], answer: "دمشق", hint: "تقع في سوريا." },
+        { question: "من هو الملك الذي بنى الأهرامات؟", choices: ["خوفو", "توت عنخ آمون", "رمسيس الثاني", "أمنحتب"], answer: "خوفو", hint: "له هرم شهير في الجيزة." },
+        { question: "في أي قرن بدأت الثورة الصناعية؟", choices: ["السادس عشر", "السابع عشر", "الثامن عشر", "التاسع عشر"], answer: "الثامن عشر", hint: "بدأت في بريطانيا." },
+        { question: "من هو مكتشف أمريكا؟", choices: ["كريستوفر كولومبوس", "فاسكو دي جاما", "ماجلان", "ماركو بولو"], answer: "كريستوفر كولومبوس", hint: "اكتشف العالم الجديد عام 1492." },
+        { question: "ما هي عاصمة الدولة العباسية؟", choices: ["دمشق", "بغداد", "القاهرة", "قرطبة"], answer: "بغداد", hint: "مركز الحضارة الإسلامية." }
+      ],
+      medium: [
+        { question: "من كان أول رئيس للولايات المتحدة؟", choices: ["توماس جيفرسون", "جورج واشنطن", "أبراهام لينكولن", "جون آدامز"], answer: "جورج واشنطن", hint: "ظهر صورته على عملة الدولار." },
+        { question: "ما هي الدولة التي حكمت فلسطين قبل الحرب العالمية الأولى؟", choices: ["الدولة العثمانية", "بريطانيا", "فرنسا", "روسيا"], answer: "الدولة العثمانية", hint: "حكمت لمدة 400 عام." },
+        { question: "من هو القائد الذي فتح الأندلس؟", choices: ["صلاح الدين", "طارق بن زياد", "عمر بن الخطاب", "خالد بن الوليد"], answer: "طارق بن زياد", hint: "له جبل يحمل اسمه." },
+        { question: "في أي عام تم اكتشاف أمريكا؟", choices: ["1453", "1492", "1519", "1607"], answer: "1492", hint: "كان كريستوفر كولومبوس." },
+        { question: "ما هي الحرب التي وقعت بين 1939 و1945؟", choices: ["الحرب العالمية الأولى", "الحرب العالمية الثانية", "حرب الباردة", "حرب فيتنام"], answer: "الحرب العالمية الثانية", hint: "شاركت فيها دول العالم الكبرى." },
+        { question: "من هو القائد الذي هزم نابليون في واترلو؟", choices: ["ويلينغتون", "نيلسون", "بلوتشر", "كوتوزوف"], answer: "ويلينغتون", hint: "قائد بريطاني." },
+        { question: "ما هي الحضارة التي اشتهرت بالهرم المتدرج؟", choices: ["المايا", "الأزتيك", "الإنكا", "السومرية"], answer: "المايا", hint: "تقع في أمريكا الوسطى." }
+      ],
+      hard: [
+        { question: "في أي عام سقطت غرناطة آخر معاقل المسلمين في الأندلس؟", choices: ["1492", "1453", "1500", "1485"], answer: "1492", hint: "في نفس عام اكتشاف أمريكا." },
+        { question: "من هو القائد الذي فتح القسطنطينية؟", choices: ["السلطان سليمان", "محمد الفاتح", "سليم الأول", "عثمان الأول"], answer: "محمد الفاتح", hint: "فتحها عام 1453." },
+        { question: "ما هي الحضارة التي بنت ماتشو بيتشو؟", choices: ["المايا", "الأزتيك", "الإنكا", "الأولمك"], answer: "الإنكا", hint: "تقع في بيرو." },
+        { question: "من هو الإمبراطور الذي وحد أوروبا في القرن التاسع؟", choices: ["شارلمان", "نابليون", "قسطنطين", "أوتو الأول"], answer: "شارلمان", hint: "لقب بأبو أوروبا." },
+        { question: "في أي عام تم توقيع معاهدة فرساي؟", choices: ["1914", "1919", "1925", "1933"], answer: "1919", hint: "أنهت الحرب العالمية الأولى." },
+        { question: "من هو العالم الذي اخترع المصباح الكهربائي؟", choices: ["توماس إديسون", "نيكولا تسلا", "ألكسندر بيل", "غاليلي"], answer: "توماس إديسون", hint: "مخترع أمريكي شهير." },
+        { question: "ما هي الدولة التي قادت الثورة البلشفية؟", choices: ["روسيا", "فرنسا", "ألمانيا", "بريطانيا"], answer: "روسيا", hint: "حدثت في عام 1917." }
+      ]
+    },
+    sports: {
+      easy: [
+        { question: "في أي رياضة يستخدم المضرب والكرة الصفراء؟", choices: ["كرة السلة", "التنس", "الجولف", "الكريكيت"], answer: "التنس", hint: "تلعب على ملعب مقسم بشبكة." },
+        { question: "ما هو اسم الرياضة التي تلعب بكرة ومرمى؟", choices: ["كرة السلة", "كرة القدم", "الهوكي", "البيسبول"], answer: "كرة القدم", hint: "أشهر رياضة في العالم." },
+        { question: "كم عدد لاعبي كرة السلة في الملعب لكل فريق؟", choices: ["5", "6", "7", "11"], answer: "5", hint: "عدد أقل من كرة القدم." },
+        { question: "ما هو اسم الرياضة التي تستخدم مضربًا وشبكة منخفضة؟", choices: ["التنس", "كرة الطائرة", "كرة الريشة", "الجولف"], answer: "كرة الريشة", hint: "تستخدم ريشة بدلاً من كرة." },
+        { question: "ما هي الرياضة التي تُلعب على الجليد؟", choices: ["الهوكي", "كرة القدم", "التنس", "البيسبول"], answer: "الهوكي", hint: "تستخدم عصا وقرصًا." },
+        { question: "ما هو اسم الرياضة التي تستخدم كرة صغيرة ومضرب خشبي؟", choices: ["الجولف", "الكريكيت", "البيسبول", "الهوكي"], answer: "البيسبول", hint: "شعبية في أمريكا." },
+        { question: "كم عدد لاعبي كرة الطائرة في الملعب لكل فريق؟", choices: ["4", "5", "6", "7"], answer: "6", hint: "تلعب فوق شبكة مرتفعة." }
+      ],
+      medium: [
+        { question: "كم عدد لاعبي كرة القدم في كل فريق؟", choices: ["10", "11", "12", "9"], answer: "11", hint: "بما فيهم حارس المرمى." },
+        { question: "ما هي الرياضة التي يلعب فيها مايكل جوردان؟", choices: ["كرة القدم", "كرة السلة", "التنس", "الجولف"], answer: "كرة السلة", hint: "اشتهر بفريق شيكاغو بولز." },
+        { question: "في أي عام أقيمت أول أولمبياد حديثة؟", choices: ["1896", "1900", "1904", "1912"], answer: "1896", hint: "أقيمت في أثينا." },
+        { question: "ما هي الرياضة التي تستخدم قفازات ثقيلة؟", choices: ["الملاكمة", "كرة القدم الأمريكية", "الهوكي", "الكريكيت"], answer: "الملاكمة", hint: "رياضة القتال." },
+        { question: "كم عدد الحلقات في شعار الأولمبياد؟", choices: ["3", "4", "5", "6"], answer: "5", hint: "تمثل القارات." },
+        { question: "ما هي الرياضة التي تُلعب بمضرب طويل في ملعب عشبي؟", choices: ["التنس", "الهوكي", "الجولف", "الكريكيت"], answer: "الهوكي", hint: "تستخدم كرة صغيرة." },
+        { question: "من هو اللاعب الذي فاز بكأس العالم 2014؟", choices: ["ميسي", "رونالدو", "نيمار", "مولر"], answer: "مولر", hint: "منتخب ألمانيا." }
+      ],
+      hard: [
+        { question: "من هو اللاعب الوحيد الذي فاز بثلاث كؤوس عالمية؟", choices: ["بيليه", "مارادونا", "زيدان", "رونالدو"], answer: "بيليه", hint: "لاعب برازيلي مشهور." },
+        { question: "ما هي الرياضة التي فاز فيها يوسين بولت بميداليات ذهبية؟", choices: ["السباحة", "ألعاب القوى", "كرة السلة", "التنس"], answer: "ألعاب القوى", hint: "في سباقات السرعة." },
+        { question: "في أي عام فازت البرازيل بأول كأس عالم؟", choices: ["1950", "1958", "1962", "1970"], answer: "1958", hint: "كانت في السويد." },
+        { question: "ما هو اسم الرياضة التي تُلعب على طاولة مع مضارب صغيرة؟", choices: ["تنس الطاولة", "البلياردو", "الشطرنج", "الدومينو"], answer: "تنس الطاولة", hint: "تستخدم كرة خفيفة." },
+        { question: "من هو اللاعب الذي فاز بأكبر عدد من بطولات التنس الكبرى؟", choices: ["نادال", "فيدرر", "دجوكوفيتش", "سانغرام"], answer: "دجوكوفيتش", hint: "لاعب صربي." },
+        { question: "في أي عام أقيمت أول بطولة ويمبلدون؟", choices: ["1877", "1885", "1890", "1901"], answer: "1877", hint: "أقدم بطولة تنس." },
+        { question: "ما هي الرياضة التي تُلعب بـ 15 لاعبًا في كل فريق؟", choices: ["كرة القدم", "الرجبي", "كرة السلة", "الهوكي"], answer: "الرجبي", hint: "تعرف باسم رجبي يونيون." }
+      ]
+    }
+  };
+    // Game state variables
+  let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+  let selectedTopic = null;
+  let selectedDifficulty = null;
+  let questionsPool = [];
+  let currentIndex = 0;
+  let score = 0;
+  let hintCount = 3;
+  let timerDuration = 30;
+  let timerInterval = null;
+  let comboCount = 0;
+  let currentLevel = parseInt(localStorage.getItem('currentLevel')) || 1;
+  let xp = parseInt(localStorage.getItem('xp')) || 0;
+  let xpToNextLevel = parseInt(localStorage.getItem('xpToNextLevel')) || 100;
+  let perfectGame = true;
+  let usedHints = false;
+  let isSpeedMode = false;
+  let totalCorrectAnswers = parseInt(localStorage.getItem('totalCorrectAnswers')) || 0;
+  let consecutiveDays = parseInt(localStorage.getItem('consecutiveDays')) || 0;
+  let lastLoginDate = localStorage.getItem('lastLoginDate') || null;
+  let speedModeStartTime = null;
+  let speedModeCorrectCount = 0;
+  let offlineQuestions = JSON.parse(localStorage.getItem('offlineQuestions')) || [];
+  let coins = parseInt(localStorage.getItem('coins')) || 0;
+
+  // Achievements and Badges
+  const achievements = {
+    fastAnswer: { name: "سريع كالبرق", desc: "أجب على سؤال في أقل من 5 ثوان", earned: JSON.parse(localStorage.getItem('achievement_fastAnswer')) || false, badge: "⚡" },
+    perfectGame: { name: "مثالي", desc: "أجب على جميع الأسئلة بشكل صحيح", earned: JSON.parse(localStorage.getItem('achievement_perfectGame')) || false, badge: "⭐" },
+    hintMaster: { name: "لا تحتاج تلميحات", desc: "أكمل لعبة دون استخدام تلميحات", earned: JSON.parse(localStorage.getItem('achievement_hintMaster')) || false, badge: "🔔" },
+    levelUp: { name: "المستوى التالي", desc: "وصلت إلى مستوى جديد", earned: JSON.parse(localStorage.getItem('achievement_levelUp')) || false, badge: "⬆️" },
+    expert: { name: "الخبير", desc: "أجب على 50 سؤالاً بشكل صحيح", earned: JSON.parse(localStorage.getItem('achievement_expert')) || false, badge: "🎓" },
+    speedMaster: { name: "السرعة القصوى", desc: "أكمل 5 أسئلة في أقل من دقيقة", earned: JSON.parse(localStorage.getItem('achievement_speedMaster')) || false, badge: "⏱️" },
+    master: { name: "المعلم", desc: "وصل إلى المستوى 10", earned: JSON.parse(localStorage.getItem('achievement_master')) || false, badge: "🏆" }
+  };
+
+  // Elements
+  const loginScreen = document.getElementById('login-screen');
+  const topicSelection = document.getElementById('topic-selection');
+  const difficultySelection = document.getElementById('difficulty-selection');
+  const gamePlay = document.getElementById('game-play');
+  const endScreen = document.getElementById('end-screen');
+  const progressEl = document.getElementById('progress');
+  const timerBar = document.getElementById('timer-bar');
+  const questionEl = document.getElementById('question');
+  const choicesEl = document.getElementById('choices');
+  const hintBtn = document.getElementById('hint-btn');
+  const feedback = document.getElementById('feedback');
+  const comboCounter = document.getElementById('combo-counter');
+  const scoreEl = document.getElementById('score');
+  const highScoreEl = document.getElementById('high-score');
+  const restartBtn = document.getElementById('restart-btn');
+  const dailyChallengeBtn = document.getElementById('daily-challenge-btn');
+  const leaderboardEl = document.getElementById('leaderboard');
+  const levelDisplay = document.getElementById('level-display');
+  const xpDisplay = document.getElementById('xp-display');
+  const xpBar = document.getElementById('xp-bar');
+  const gameContainer = document.getElementById('game-container');
+  const userInfo = document.getElementById('user-info');
+  const watchAdBtn = document.getElementById('watch-ad-btn');
+  const endFeedback = document.getElementById('end-feedback');
+  const restartGameBtn = document.getElementById('restart-game-btn');
+  const shareResultBtn = document.getElementById('share-result-btn');
+  const badgesSection = document.getElementById('badges-section');
+  const badgesList = document.getElementById('badges-list');
+
+  // Side Menu, Overlay, and Modal Elements
+  const menuBtn = document.getElementById('menu-btn');
+  const sideMenu = document.getElementById('side-menu');
+  const closeMenuBtn = document.getElementById('close-menu-btn');
+  const overlay = document.getElementById('overlay');
+  const menuFreePlay = document.getElementById('menu-free-play');
+  const menuSpeedMode = document.getElementById('menu-speed-mode');
+  const menuChallenges = document.getElementById('menu-challenges');
+  const menuGame = document.getElementById('menu-game');
+  const menuStats = document.getElementById('menu-stats');
+  const menuSettings = document.getElementById('menu-settings');
+  const menuAddFriend = document.getElementById('menu-add-friend');
+  const menuRate = document.getElementById('menu-rate');
+  const menuOfflineMode = document.getElementById('menu-offline-mode');
+  const menuLogout = document.getElementById('menu-logout');
+  const settingsModal = document.getElementById('settings-modal');
+  const statsModal = document.getElementById('stats-modal');
+  const addFriendModal = document.getElementById('add-friend-modal');
+  const closeButtons = document.querySelectorAll('.close-btn');
+  const saveSettingsBtn = document.getElementById('save-settings-btn');
+  const addFriendSubmit = document.getElementById('add-friend-submit');
+  const volumeSlider = document.getElementById('volume-slider');
+  const guestSignInBtn = document.getElementById('guest-signin-btn');
+
+  // Sound Effects
+  const openMenuSound = new Audio('https://www.freesound.org/data/previews/612/612609_5676601-lq.mp3');
+  const closeMenuSound = new Audio('https://www.freesound.org/data/previews/612/612608_5676601-lq.mp3');
+  const correctSound = new Audio('https://www.soundjay.com/buttons/sounds/success-1.mp3');
+  const incorrectSound = new Audio('https://www.soundjay.com/buttons/sounds/error-2.mp3');
+  const hintSound = new Audio('https://www.freesound.org/data/previews/170/170143_1676141-lq.mp3');
+  const gameEndSound = new Audio('https://www.soundjay.com/misc/sounds/tada-1.mp3');
+
+  // Initialize volume
+  let soundVolume = localStorage.getItem('soundVolume') || 1;
+  updateSoundVolume(soundVolume);
+
+  // Initialize game
+  window.onload = function() {
+    if (!currentUser) {
+      initializeGoogleSignIn();
+    } else {
+      loginScreen.classList.remove('visible');
+      topicSelection.classList.add('visible');
+      updateUserInfo();
+      checkDailyReward();
+    }
+    initGame();
+  };
+  function initGame() {
+    cacheOfflineQuestions();
+    if (currentUser) {
+      loginScreen.classList.remove('visible');
+      topicSelection.classList.add('visible');
+      updateUserInfo();
+      checkDailyReward();
+      setupNotifications();
+    } else {
+      loginScreen.classList.add('visible');
+      topicSelection.classList.remove('visible');
+    }
+    difficultySelection.classList.remove('visible');
+    gamePlay.classList.remove('visible');
+    endScreen.classList.remove('visible');
+    resetGame();
+    setupDailyChallenge();
+    displayLeaderboard();
+    initializeSettings();
+    displayBadges();
+  }
+
+  // Google Sign-In Initialization
+  function initializeGoogleSignIn() {
+    google.accounts.id.initialize({
+      client_id: "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+      callback: handleCredentialResponse
+    });
+    
+    google.accounts.id.renderButton(
+      document.getElementById("g_id_signin"),
+      { theme: "outline", size: "large" }
+    );
+    
+    google.accounts.id.prompt();
+  }
+
+  function handleCredentialResponse(response) {
+    const profile = jwt_decode(response.credential);
+    currentUser = {
+      name: profile.name,
+      email: profile.email,
+      type: 'google',
+      token: response.credential
+    };
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    loginScreen.classList.remove('visible');
+    topicSelection.classList.add('visible');
+    updateUserInfo();
+    checkDailyReward();
+  }
+
+  // Helper function to decode JWT
+  function jwt_decode(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  }
+
+  function loginAsGuest() {
+    currentUser = { 
+      name: "ضيف", 
+      email: "guest@example.com",
+      type: 'guest' 
+    };
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    loginScreen.classList.remove('visible');
+    topicSelection.classList.add('visible');
+    updateUserInfo();
+    checkDailyReward();
+  }
+
+  function resetGame() {
+    currentIndex = 0;
+    score = 0;
+    comboCount = 0;
+    perfectGame = true;
+    usedHints = false;
+    updateScoreDisplay();
+    hintCount = 3;
+    hintBtn.textContent = '(' + hintCount + ') نقاط التلميح المتبقية';
+    hintBtn.disabled = false;
+    feedback.textContent = '';
+    restartBtn.style.display = 'none';
+    watchAdBtn.style.display = 'none';
+    endScreen.classList.remove('visible');
+    timerDuration = isSpeedMode ? 10 : 30;
+    closeModals();
+    closeSideMenu();
+    speedModeCorrectCount = 0;
+    speedModeStartTime = null;
+  }
+
+  function updateScoreDisplay() {
+    scoreEl.textContent = 'النقاط: ' + score;
+    const highScore = localStorage.getItem('highScore') || 0;
+    if (score > highScore) {
+      localStorage.setItem('highScore', score);
+      highScoreEl.textContent = 'أعلى نتيجة: ' + score + ' (جديد!)';
+    } else {
+      highScoreEl.textContent = 'أعلى ناتجة: ' + highScore;
+    }
+  }
+
+  function updateComboDisplay() {
+    if (comboCount > 1) {
+      comboCounter.textContent = 'سلسلة صحيحة متتالية: ×' + comboCount;
+    } else {
+      comboCounter.textContent = '';
+    }
+  }
+
+  function updateLevelSystem(pointsEarned) {
+    xp += pointsEarned;
+    
+    if (xp >= xpToNextLevel) {
+      const oldLevel = currentLevel;
+      let levelsGained = 0;
+      
+      while (xp >= xpToNextLevel) {
+        currentLevel++;
+        levelsGained++;
+        xp -= xpToNextLevel;
+        xpToNextLevel = Math.floor(xpToNextLevel * 1.5);
+      }
+      
+      showLevelUpPopup(oldLevel, currentLevel);
+      achievements.levelUp.earned = true;
+      localStorage.setItem('achievement_levelUp', true);
+      showAchievement(achievements.levelUp);
+      
+      if (currentLevel >= 10 && !achievements.master.earned) {
+        achievements.master.earned = true;
+        localStorage.setItem('achievement_master', true);
+        showAchievement(achievements.master);
+      }
+    }
+    
+    localStorage.setItem('currentLevel', currentLevel);
+    localStorage.setItem('xp', xp);
+    localStorage.setItem('xpToNextLevel', xpToNextLevel);
+    levelDisplay.textContent = `المستوى: ${currentLevel}`;
+    xpDisplay.textContent = `${xp}/${xpToNextLevel} XP`;
+    xpBar.style.width = `${(xp / xpToNextLevel) * 100}%`;
+  }
+
+  function showLevelUpPopup(oldLevel, newLevel) {
+    const popup = document.createElement('div');
+    popup.className = 'level-up-popup';
+    popup.innerHTML = `
+      <h3>🎉 تهنئة!</h3>
+      <p>لقد تقدمت من المستوى ${oldLevel} إلى المستوى ${newLevel}</p>
+      <p>+${xpToNextLevel} XP مطلوبة للمستوى التالي</p>
+    `;
+    document.body.appendChild(popup);
+    
+    setTimeout(() => popup.remove(), 4000);
+  }
+
+  function startTimer() {
+    let timeLeft = timerDuration;
+    timerBar.style.width = '100%';
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      timerBar.style.width = (timeLeft / timerDuration) * 100 + '%';
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        onTimeUp();
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+  }
+
+  function displayQuestion() {
+    const q = questionsPool[currentIndex];
+    progressEl.textContent = 'السؤال ' + (currentIndex + 1) + ' من ' + questionsPool.length;
+    questionEl.textContent = q.question;
+    feedback.textContent = '';
+    hintBtn.disabled = (hintCount <= 0);
+    choicesEl.innerHTML = '';
+    
+    q.choices.forEach(choiceText => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = choiceText;
+      btn.addEventListener('click', () => selectAnswer(btn, choiceText));
+      choicesEl.appendChild(btn);
+    });
+    startTimer();
+    if (isSpeedMode && speedModeStartTime === null) {
+      speedModeStartTime = Date.now();
+    }
+  }
+
+  function selectAnswer(btn, selectedText) {
+    stopTimer();
+    const currentQ = questionsPool[currentIndex];
+    document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+    
+    if (selectedText === currentQ.answer) {
+      btn.classList.add('correct');
+      feedback.textContent = 'إجابة صحيحة! 👍';
+      let points = isSpeedMode ? 20 : 10;
+      score += points;
+      totalCorrectAnswers++;
+      localStorage.setItem('totalCorrectAnswers', totalCorrectAnswers);
+      comboCount++;
+      updateComboDisplay();
+      
+      if (comboCount > 1) {
+        const bonusTime = Math.min(comboCount, 5);
+        timerDuration += bonusTime;
+        feedback.textContent += ` +${bonusTime} ثانية للمؤقت!`;
+      }
+      
+      if (totalCorrectAnswers >= 50 && !achievements.expert.earned) {
+        achievements.expert.earned = true;
+        localStorage.setItem('achievement_expert', true);
+        showAchievement(achievements.expert);
+      }
+      
+      if (isSpeedMode) {
+        speedModeCorrectCount++;
+        if (speedModeCorrectCount >= 5) {
+          const elapsedTime = (Date.now() - speedModeStartTime) / 1000;
+          if (elapsedTime < 60 && !achievements.speedMaster.earned) {
+            achievements.speedMaster.earned = true;
+            localStorage.setItem('achievement_speedMaster', true);
+            showAchievement(achievements.speedMaster);
+          }
+        }
+      }
+      
+      if (localStorage.getItem('soundEnabled') === 'true') {
+        correctSound.volume = soundVolume;
+        correctSound.play();
+      }
+      
+      celebrateCorrect();
+    } else {
+      btn.classList.add('incorrect');
+      document.querySelectorAll('.choice-btn').forEach(b => {
+        if (b.textContent === currentQ.answer) {
+          b.classList.add('correct');
+        }
+      });
+      
+      feedback.textContent = 'إجابة خاطئة. الإجابة الصحيحة: ' + currentQ.answer;
+      comboCount = 0;
+      perfectGame = false;
+      
+      if (localStorage.getItem('soundEnabled') === 'true') {
+        incorrectSound.volume = soundVolume;
+        incorrectSound.play();
+      }
+      
+      shakeScreen();
+    }
+    
+    checkAchievements();
+    updateScoreDisplay();
+    updateLevelSystem(isSpeedMode ? 20 : 10);
+    
+    setTimeout(() => {
+      nextQuestion();
+    }, 2000);
+  }
+
+  function useHint() {
+    if (hintCount <= 0) return;
+    hintCount--;
+    usedHints = true;
+    hintBtn.textContent = '(' + hintCount + ') نقاط التلميح المتبقية';
+    if (hintCount <= 0) hintBtn.disabled = true;
+    
+    const hintText = questionsPool[currentIndex].hint || 'لا يوجد تلميح لهذا السؤال.';
+    feedback.textContent = 'التلميح: ' + hintText;
+    
+    if (localStorage.getItem('soundEnabled') === 'true') {
+      hintSound.volume = soundVolume;
+      hintSound.play();
+    }
+  }
+
+  function onTimeUp() {
+    document.querySelectorAll('.choice-btn').forEach(b => {
+      b.disabled = true;
+      if (b.textContent === questionsPool[currentIndex].answer) {
+        b.classList.add('correct');
+      }
+    });
+    
+    feedback.textContent = 'انتهى الوقت! الإجابة الصحيحة: ' + questionsPool[currentIndex].answer;
+    comboCount = 0;
+    perfectGame = false;
+    updateComboDisplay();
+    
+    if (localStorage.getItem('soundEnabled') === 'true') {
+      incorrectSound.volume = soundVolume;
+      incorrectSound.play();
+    }
+    
+    shakeScreen();
+    
+    setTimeout(() => {
+      nextQuestion();
+    }, 2000);
+  }
+
+  function nextQuestion() {
+    currentIndex++;
+    if (currentIndex < questionsPool.length) {
+      displayQuestion();
+    } else {
+      endGame();
+    }
+  }
+
+  function endGame() {
+    gamePlay.classList.remove('visible');
+    endScreen.classList.add('visible');
+    
+    let feedbackText = `
+      <h3>🎮 انتهت اللعبة!</h3>
+      <p>النقاط: <strong>${score}</strong></p>
+      <p>عدد الأسئلة الصحيحة: <strong>${currentIndex} من ${questionsPool.length}</strong></p>
+      <p>المستوى: <strong>${currentLevel}</strong></p>
+    `;
+    
+    if (perfectGame) {
+      feedbackText += '<p style="color:#4CAF50;">🎉 إجابات مثالية!</p>';
+      if (!achievements.perfectGame.earned) {
+        achievements.perfectGame.earned = true;
+        localStorage.setItem('achievement_perfectGame', true);
+        showAchievement(achievements.perfectGame);
+      }
+    }
+    
+    if (!usedHints) {
+      feedbackText += '<p style="color:#2196F3;">🧠 بدون استخدام تلميحات!</p>';
+      if (!achievements.hintMaster.earned) {
+        achievements.hintMaster.earned = true;
+        localStorage.setItem('achievement_hintMaster', true);
+        showAchievement(achievements.hintMaster);
+      }
+    }
+    
+    // إضافة المكافآت
+    const coinsEarned = score * 2;
+    coins += coinsEarned;
+    localStorage.setItem('coins', coins);
+    feedbackText += `<p>💰 ربحت: ${coinsEarned} عملة (إجمالي: ${coins})</p>`;
+    
+    endFeedback.innerHTML = feedbackText;
+    
+    if (localStorage.getItem('soundEnabled') === 'true') {
+      gameEndSound.volume = soundVolume;
+      gameEndSound.play();
+    }
+    
+    updateLeaderboard();
+    displayBadges();
+  }
+
+  function startTopic(topicId) {
+    selectedTopic = topicId;
+    topicSelection.classList.remove('visible');
+    difficultySelection.classList.add('visible');
+  }
+
+  function startDifficulty(difficulty) {
+    selectedDifficulty = difficulty;
+    difficultySelection.classList.remove('visible');
+    gamePlay.classList.add('visible');
+    resetGame();
+    questionsPool = questionsDB[selectedTopic][selectedDifficulty].slice(0, 5); // Limit to 5 questions
+    shuffleArray(questionsPool);
+    displayQuestion();
+  }
+
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+  / Update user info in side menu
+  function updateUserInfo() {
+    userInfo.innerHTML = `
+      <p><strong>${currentUser.name}</strong></p>
+      <p>المستوى: ${currentLevel}</p>
+      <p>💰 ${coins} عملة</p>
+    `;
+  }
+
+  // Check and award daily reward
+  function checkDailyReward() {
+    const today = new Date().toISOString().split('T')[0];
+    if (lastLoginDate !== today) {
+      consecutiveDays = lastLoginDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? consecutiveDays + 1 : 1;
+      lastLoginDate = today;
+      localStorage.setItem('lastLoginDate', lastLoginDate);
+      localStorage.setItem('consecutiveDays', consecutiveDays);
+      coins += 50 * consecutiveDays;
+      localStorage.setItem('coins', coins);
+      showDailyRewardPopup(`مكافأة يومية! +${50 * consecutiveDays} عملة (سلسلة: ${consecutiveDays} أيام)`);
+    }
+  }
+
+  // Show daily reward popup
+  function showDailyRewardPopup(message) {
+    const popup = document.createElement('div');
+    popup.className = 'daily-reward-popup';
+    popup.textContent = message;
+    document.body.appendChild(popup);
+    setTimeout(() => {
+      popup.remove();
+    }, 5000);
+  }
+
+  // Show achievement popup
+  function showAchievement(achievement) {
+    const popup = document.createElement('div');
+    popup.className = 'achievement-popup';
+    popup.innerHTML = `<strong>${achievement.name}</strong><br>${achievement.desc}<br>${achievement.badge}`;
+    document.body.appendChild(popup);
+    setTimeout(() => {
+      popup.remove();
+    }, 5000);
+  }
+
+  // Celebrate correct answer with confetti
+  function celebrateCorrect() {
+    for (let i = 0; i < 30; i++) {
+      setTimeout(() => {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.backgroundColor = ['#FFD700', '#FF6347', '#40E0D0'][Math.floor(Math.random() * 3)];
+        confetti.style.animationDuration = Math.random() * 2 + 1 + 's';
+        document.body.appendChild(confetti);
+        
+        setTimeout(() => {
+          confetti.remove();
+        }, 3000);
+      }, i * 50);
+    }
+  }
+
+  // Shake screen on incorrect answer
+  function shakeScreen() {
+    gameContainer.style.animation = 'shake 0.5s';
+    setTimeout(() => {
+      gameContainer.style.animation = '';
+    }, 500);
+  }
+
+  // Update leaderboard
+  function updateLeaderboard() {
+    const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+    const userEntry = leaderboard.find(entry => entry.name === currentUser.name) || { name: currentUser.name, score: 0 };
+    
+    if (score > userEntry.score) {
+      userEntry.score = score;
+      const index = leaderboard.findIndex(entry => entry.name === currentUser.name);
+      if (index > -1) {
+        leaderboard[index] = userEntry;
+      } else {
+        leaderboard.push(userEntry);
+      }
+      
+      leaderboard.sort((a, b) => b.score - a.score);
+      leaderboard.splice(10); // Keep top 10
+      localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+    }
+    
+    displayLeaderboard();
+  }
+
+  // Display leaderboard
+  function displayLeaderboard() {
+    const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+    
+    if (leaderboard.length === 0) {
+      leaderboardEl.innerHTML = '<p style="text-align:center; padding:20px;">لا توجد نتائج بعد</p>';
+      leaderboardEl.style.display = 'block';
+      return;
+    }
+    
+    let html = '<h3>🏆 لوحة المتصدرين</h3>';
+    leaderboard.forEach((entry, index) => {
+      const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+      html += `
+        <div class="leaderboard-entry ${index < 3 ? 'top-three' : ''}">
+          <span>${medal} ${entry.name}</span>
+          <span>${entry.score} نقطة</span>
+        </div>
+      `;
+    });
+    
+    leaderboardEl.innerHTML = html;
+    leaderboardEl.style.display = 'block';
+  }
+
+  // Cache questions for offline mode
+  function cacheOfflineQuestions() {
+    offlineQuestions = [];
+    for (let topic in questionsDB) {
+      for (let difficulty in questionsDB[topic]) {
+        offlineQuestions.push(...questionsDB[topic][difficulty]);
+      }
+    }
+    localStorage.setItem('offlineQuestions', JSON.stringify(offlineQuestions));
+  }
+
+  // Setup daily challenge
+  function setupDailyChallenge() {
+    const today = new Date().toISOString().split('T')[0];
+    const lastChallengeDate = localStorage.getItem('lastChallengeDate');
+    if (lastChallengeDate !== today) {
+      dailyChallengeBtn.style.display = 'block';
+    }
+  }
+
+  // Start daily challenge
+  function startDailyChallenge() {
+    selectedTopic = Object.keys(questionsDB)[Math.floor(Math.random() * Object.keys(questionsDB).length)];
+    selectedDifficulty = ['easy', 'medium', 'hard'][Math.floor(Math.random() * 3)];
+    questionsPool = questionsDB[selectedTopic][selectedDifficulty].slice(0, 5);
+    shuffleArray(questionsPool);
+    topicSelection.classList.remove('visible');
+    gamePlay.classList.add('visible');
+    resetGame();
+    displayQuestion();
+    localStorage.setItem('lastChallengeDate', new Date().toISOString().split('T')[0]);
+    dailyChallengeBtn.style.display = 'none';
+  }
+
+  // Initialize settings
+  function initializeSettings() {
+    const soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+    document.getElementById('sound-toggle').checked = soundEnabled;
+    volumeSlider.value = soundVolume;
+    
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+    document.getElementById('dark-mode-toggle').checked = darkMode;
+    applyDarkMode(darkMode);
+  }
+
+  // Apply dark mode
+  function applyDarkMode(enabled) {
+    if (enabled) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }
+  / Save settings
+  function saveSettings() {
+    const soundEnabled = document.getElementById('sound-toggle').checked;
+    soundVolume = volumeSlider.value;
+    const darkMode = document.getElementById('dark-mode-toggle').checked;
+    
+    localStorage.setItem('soundEnabled', soundEnabled);
+    localStorage.setItem('soundVolume', soundVolume);
+    localStorage.setItem('darkMode', darkMode);
+    
+    updateSoundVolume(soundVolume);
+    applyDarkMode(darkMode);
+    closeModals();
+  }
+
+  // Update sound volume
+  function updateSoundVolume(volume) {
+    soundVolume = volume;
+    [openMenuSound, closeMenuSound, correctSound, incorrectSound, hintSound, gameEndSound].forEach(sound => {
+      sound.volume = volume;
+    });
+  }
+
+  // Display badges in stats modal
+  function displayBadges() {
+    badgesList.innerHTML = '';
+    let earnedCount = 0;
+    
+    for (let key in achievements) {
+      if (achievements[key].earned) {
+        earnedCount++;
+        const badgeItem = document.createElement('div');
+        badgeItem.className = 'badge-item';
+        badgeItem.innerHTML = `<span>${achievements[key].name}</span><span>${achievements[key].badge}</span>`;
+        badgesList.appendChild(badgeItem);
+      }
+    }
+    
+    badgesSection.style.display = earnedCount ? 'block' : 'none';
+  }
+
+  // Check achievements
+  function checkAchievements() {
+    // Fast answer achievement
+    const timeUsed = timerDuration - (timerBar.offsetWidth / timerBar.parentElement.offsetWidth * timerDuration);
+    if (timeUsed < 5 && !achievements.fastAnswer.earned) {
+      achievements.fastAnswer.earned = true;
+      localStorage.setItem('achievement_fastAnswer', true);
+      showAchievement(achievements.fastAnswer);
+    }
+  }
+
+  // Event Listeners
+  document.querySelectorAll('#topic-selection .btn').forEach(btn => {
+    btn.addEventListener('click', () => startTopic(btn.dataset.topic));
+  });
+
+  document.querySelectorAll('#difficulty-selection .btn').forEach(btn => {
+    btn.addEventListener('click', () => startDifficulty(btn.dataset.difficulty));
+  });
+
+  hintBtn.addEventListener('click', useHint);
+
+  restartBtn.addEventListener('click', () => {
+    resetGame();
+    gamePlay.classList.remove('visible');
+    topicSelection.classList.add('visible');
+  });
+
+  restartGameBtn.addEventListener('click', () => {
+    resetGame();
+    endScreen.classList.remove('visible');
+    topicSelection.classList.add('visible');
+  });
+
+  shareResultBtn.addEventListener('click', () => {
+    const text = `لقد سجلت ${score} نقطة في لعبة الألغاز العربية! 🎉 جربها الآن!`;
+    if (navigator.share) {
+      navigator.share({ 
+        title: 'لعبة الألغاز العربية', 
+        text: text,
+        url: window.location.href 
+      });
+    } else {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('تم نسخ النتيجة إلى الحافظة: ' + text);
+      });
+    }
+  });
+
+  dailyChallengeBtn.addEventListener('click', startDailyChallenge);
+
+  watchAdBtn.addEventListener('click', () => {
+    alert('شاهد إعلانًا للحصول على تلميح إضافي!');
+    hintCount++;
+    hintBtn.textContent = '(' + hintCount + ') نقاط التلميح المتبقية';
+    hintBtn.disabled = false;
+    watchAdBtn.style.display = 'none';
+  });
+
+  guestSignInBtn.addEventListener('click', loginAsGuest);
+
+  // Side Menu Event Listeners
+  menuBtn.addEventListener('click', () => {
+    sideMenu.classList.add('open');
+    overlay.classList.add('visible');
+    gameContainer.classList.add('blurred');
+    if (localStorage.getItem('soundEnabled') === 'true') {
+      openMenuSound.play();
+    }
+  });
+
+  closeMenuBtn.addEventListener('click', closeSideMenu);
+  overlay.addEventListener('click', closeSideMenu);
+
+  function closeSideMenu() {
+    sideMenu.classList.remove('open');
+    overlay.classList.remove('visible');
+    gameContainer.classList.remove('blurred');
+    if (localStorage.getItem('soundEnabled') === 'true') {
+      closeMenuSound.play();
+    }
+  }
+
+  menuFreePlay.addEventListener('click', () => {
+    isSpeedMode = false;
+    resetGame();
+    closeSideMenu();
+    gamePlay.classList.remove('visible');
+    topicSelection.classList.add('visible');
+  });
+
+  menuSpeedMode.addEventListener('click', () => {
+    isSpeedMode = true;
+    resetGame();
+    closeSideMenu();
+    gamePlay.classList.remove('visible');
+    topicSelection.classList.add('visible');
+  });
+
+  menuChallenges.addEventListener('click', () => {
+    alert('التحديات قيد التطوير!');
+    closeSideMenu();
+  });
+
+  menuGame.addEventListener('click', () => {
+    resetGame();
+    closeSideMenu();
+    gamePlay.classList.remove('visible');
+    topicSelection.classList.add('visible');
+  });
+
+  menuStats.addEventListener('click', () => {
+    closeSideMenu();
+    statsModal.classList.add('visible');
+    overlay.classList.add('visible');
+    gameContainer.classList.add('blurred');
+    
+    document.getElementById('stats-level').textContent = currentLevel;
+    document.getElementById('stats-score').textContent = score;
+    document.getElementById('stats-high-score').textContent = localStorage.getItem('highScore') || 0;
+    document.getElementById('stats-achievements').textContent = Object.values(achievements).filter(a => a.earned).length;
+    document.getElementById('stats-total-correct').textContent = totalCorrectAnswers;
+    document.getElementById('stats-streak').textContent = consecutiveDays;
+  });
+
+  menuSettings.addEventListener('click', () => {
+    closeSideMenu();
+    settingsModal.classList.add('visible');
+    overlay.classList.add('visible');
+    gameContainer.classList.add('blurred');
+  });
+
+  menuAddFriend.addEventListener('click', () => {
+    closeSideMenu();
+    addFriendModal.classList.add('visible');
+    overlay.classList.add('visible');
+    gameContainer.classList.add('blurred');
+  });
+
+  menuRate.addEventListener('click', () => {
+    alert('قيّم التطبيق في متجر التطبيقات!');
+    closeSideMenu();
+  });
+
+  menuOfflineMode.addEventListener('click', () => {
+    alert('وضع بدون إنترنت قيد التطوير!');
+    closeSideMenu();
+  });
+
+  menuLogout.addEventListener('click', () => {
+    if (confirm('هل تريد تسجيل الخروج؟')) {
+      localStorage.removeItem('currentUser');
+      currentUser = null;
+      closeSideMenu();
+      loginScreen.classList.add('visible');
+      topicSelection.classList.remove('visible');
+    }
+  });
+
+  // Modal Event Listeners
+  closeButtons.forEach(btn => {
+    btn.addEventListener('click', closeModals);
+  });
+
+  function closeModals() {
+    settingsModal.classList.remove('visible');
+    statsModal.classList.remove('visible');
+    addFriendModal.classList.remove('visible');
+    overlay.classList.remove('visible');
+    gameContainer.classList.remove('blurred');
+  }
+
+  saveSettingsBtn.addEventListener('click', saveSettings);
+
+  addFriendSubmit.addEventListener('click', () => {
+    const friendInput = document.getElementById('friend-input').value;
+    if (friendInput) {
+      alert(`تم إرسال دعوة إلى ${friendInput}!`);
+      document.getElementById('friend-input').value = '';
+      closeModals();
+    } else {
+      alert('يرجى إدخال اسم المستخدم أو البريد الإلكتروني.');
+    }
+  });
+
+  // Setup notifications (mock for web)
+  function setupNotifications() {
+    if ('Notification' in window && Notification.permission !== 'denied') {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          setTimeout(() => {
+            new Notification('مرحبًا بك في لعبة الألغاز العربية!', {
+              body: 'استعد لتحديات ممتعة واختبار معلوماتك!',
+              icon: 'https://cdn-icons-png.flaticon.com/512/686/686455.png'
+            });
+          }, 2000);
+        }
+      });
+    }
+  }
+</script>
+</body>
+</html>
+```

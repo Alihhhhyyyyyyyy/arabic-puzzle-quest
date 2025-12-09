@@ -1,21 +1,1648 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>لعبة الألغاز العربية المتطورة</title>
-<!-- إضافة Google Sign-In API -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600&display=swap');
-  /* (The rest of the original CSS content remains unchanged; we only add script include at the end) */
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الألغاز العربية المتطورة</title>
+    <style>
+        /* ===== CSS الأساسي ===== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.5s ease;
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .game-container.blurred {
+            filter: blur(5px);
+        }
+
+        /* ===== الهيدر والقائمة ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .menu-btn:hover {
+            background: #2980b9;
+            transform: rotate(90deg);
+        }
+
+        /* ===== نظام المستويات ===== */
+        .level-system {
+            background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 25px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .level-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .xp-bar-container {
+            width: 100%;
+            height: 12px;
+            background: #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .xp-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 6px;
+        }
+
+        /* ===== الشاشات المختلفة ===== */
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .screen-title {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+
+        /* ===== أزرار الاختيار ===== */
+        .btn-grid {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 18px 25px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .btn.easy { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        .btn.medium { background: linear-gradient(135deg, #f39c12, #e67e22); }
+        .btn.hard { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .btn.special { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+
+        /* ===== شاشة اللعب ===== */
+        .progress {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .timer-container {
+            width: 100%;
+            height: 10px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .timer-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            width: 100%;
+            transition: width 1s linear;
+            border-radius: 5px;
+        }
+
+        .question-box {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid #ecf0f1;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .question {
+            font-size: 22px;
+            color: #2c3e50;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .choices-grid {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .choice-btn {
+            background: white;
+            border: 2px solid #3498db;
+            color: #3498db;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .choice-btn:hover {
+            background: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .choice-btn.correct {
+            background: #2ecc71;
+            border-color: #27ae60;
+            color: white;
+            animation: pulse 0.5s;
+        }
+
+        .choice-btn.incorrect {
+            background: #e74c3c;
+            border-color: #c0392b;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* ===== أدوات المساعدة ===== */
+        .game-tools {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .tool-btn {
+            flex: 1;
+            background: #9b59b6;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tool-btn:hover {
+            background: #8e44ad;
+            transform: translateY(-2px);
+        }
+
+        .tool-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ===== المعلومات ===== */
+        .game-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+        }
+
+        .info-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .combo-counter {
+            color: #e74c3c;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 18px;
+        }
+
+        /* ===== شاشة النهاية ===== */
+        .end-screen-content {
+            text-align: center;
+            animation: bounceIn 0.8s ease;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .final-score {
+            font-size: 48px;
+            color: #2ecc71;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-details {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        /* ===== القائمة الجانبية ===== */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100%;
+            background: white;
+            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: right 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .side-menu.active {
+            right: 0;
+        }
+
+        .menu-header {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .user-info {
+            text-align: center;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+        }
+
+        .menu-items {
+            flex: 1;
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 18px 25px;
+            color: #2c3e50;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+        }
+
+        .menu-item:hover {
+            background: #f8f9fa;
+            border-left-color: #3498db;
+            padding-right: 30px;
+        }
+
+        .menu-item i {
+            margin-left: 15px;
+            font-size: 20px;
+            width: 30px;
+            text-align: center;
+        }
+
+        .menu-footer {
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #eee;
+        }
+
+        /* ===== الطبقة الشفافة ===== */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* ===== النوافذ المنبثقة ===== */
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            color: #2c3e50;
+            font-size: 24px;
+        }
+
+        .close-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ===== الإشعارات ===== */
+        .notification {
+            position: fixed;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 1002;
+            animation: slideIn 0.5s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-width: 350px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            top: 20px;
+            right: 20px;
+        }
+
+        .notification.warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            top: 20px;
+            left: 20px;
+        }
+
+        /* ===== الكونفيتي ===== */
+        .confetti {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* ===== تحسينات الهاتف ===== */
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 22px;
+            }
+            
+            .question {
+                font-size: 18px;
+            }
+            
+            .btn, .choice-btn {
+                padding: 15px;
+                font-size: 16px;
+            }
+            
+            .side-menu {
+                width: 280px;
+            }
+            
+            .final-score {
+                font-size: 36px;
+            }
+            
+            .game-info {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .screen-title {
+                font-size: 20px;
+            }
+            
+            .question {
+                font-size: 16px;
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- الطبقة الشفافة -->
+    <div class="overlay" id="overlay"></div>
 
-<!-- (Original body content remains unchanged; ensure the elements with ids used by app.js exist, like g_id_signin, guest-signin-btn, user-info, login-screen, topic-selection, menu-logout) -->
+    <!-- القائمة الجانبية -->
+    <div class="side-menu" id="sideMenu">
+        <div class="menu-header">
+            <h2>القائمة الرئيسية</h2>
+        </div>
+        
+        <div class="user-info">
+            <div class="user-avatar" id="userAvatar">👤</div>
+            <h3 id="userName">مرحباً!</h3>
+            <p id="userLevel">المستوى: 1</p>
+            <p id="userCoins">💰 0 عملة</p>
+        </div>
+        
+        <div class="menu-items">
+            <div class="menu-item" id="menuProfile">
+                <i>👤</i> الملف الشخصي
+            </div>
+            <div class="menu-item" id="menuStats">
+                <i>📊</i> الإحصائيات
+            </div>
+            <div class="menu-item" id="menuAchievements">
+                <i>🏆</i> الإنجازات
+            </div>
+            <div class="menu-item" id="menuShop">
+                <i>🛒</i> المتجر
+            </div>
+            <div class="menu-item" id="menuFriends">
+                <i>👥</i> الأصدقاء
+            </div>
+            <div class="menu-item" id="menuSettings">
+                <i>⚙️</i> الإعدادات
+            </div>
+            <div class="menu-item" id="menuHelp">
+                <i>❓</i> المساعدة
+            </div>
+        </div>
+        
+        <div class="menu-footer">
+            <button class="btn" id="logoutBtn" style="width: 100%;">🚪 تسجيل الخروج</button>
+        </div>
+    </div>
 
-<!-- Include the app script -->
-<script src="/app.js"></script>
+    <!-- النوافذ المنبثقة -->
+    <div class="modal" id="statsModal">
+        <div class="modal-header">
+            <h3 class="modal-title">📊 الإحصائيات</h3>
+            <button class="close-btn" id="closeStats">&times;</button>
+        </div>
+        <div class="modal-content">
+            <div class="stat-item">
+                <span>المستوى الحالي:</span>
+                <strong id="statLevel">1</strong>
+            </div>
+            <div class="stat-item">
+                <span>إجمالي النقاط:</span>
+                <strong id="statScore">0</strong>
+            </div>
+            <div class="stat-item">
+                <span>أعلى نتيجة:</span>
+                <strong id="statHighScore">0</strong>
+            </div>
+            <div class="stat-item">
+                <span>الإجابات الصحيحة:</span>
+                <strong id="statCorrect">0</strong>
+            </div>
+            <div class="stat-item">
+                <span>الأيام المتتالية:</span>
+                <strong id="statStreak">0</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- الحاوية الرئيسية -->
+    <div class="game-container" id="gameContainer">
+        <!-- الهيدر -->
+        <div class="header">
+            <h1>🎮 لعبة الألغاز العربية</h1>
+            <button class="menu-btn" id="menuBtn">☰</button>
+        </div>
+
+        <!-- نظام المستويات -->
+        <div class="level-system">
+            <div class="level-info">
+                <span id="levelDisplay">المستوى: 1</span>
+                <span id="xpDisplay">0/100 XP</span>
+            </div>
+            <div class="xp-bar-container">
+                <div class="xp-bar" id="xpBar"></div>
+            </div>
+        </div>
+
+        <!-- شاشة تسجيل الدخول -->
+        <div class="screen active" id="loginScreen">
+            <h2 class="screen-title">مرحباً بك!</h2>
+            <div class="welcome-text">
+                <p style="text-align: center; color: #7f8c8d; margin-bottom: 30px; font-size: 18px;">
+                    اختر طريقة الدخول للبدء في مغامرة الألغاز العربية
+                </p>
+            </div>
+            
+            <div class="btn-grid">
+                <button class="btn" id="googleLoginBtn">
+                    <span style="margin-left: 10px;">G</span>
+                    الدخول بحساب Google
+                </button>
+                <button class="btn" id="guestLoginBtn">
+                    👤 الدخول كضيف
+                </button>
+                <button class="btn special" id="offlineBtn">
+                    📴 اللعب بدون إنترنت
+                </button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; color: #95a5a6;">
+                <p>بالدخول، فإنك توافق على <a href="#" style="color: #3498db;">شروط الاستخدام</a></p>
+            </div>
+        </div>
+
+        <!-- شاشة اختيار الموضوع -->
+        <div class="screen" id="topicScreen">
+            <h2 class="screen-title">📚 اختر موضوع الأسئلة</h2>
+            <div class="btn-grid">
+                     <button class="btn" data-topic="general">🌍 الثقافة العامة</button>
+                <button class="btn" data-topic="science">🔬 العلوم</button>
+                <button class="btn" data-topic="history">🏛️ التاريخ</button>
+                <button class="btn" data-topic="sports">⚽ الرياضة</button>
+                <button class="btn" data-topic="islamic">🕌 الثقافة الإسلامية</button>
+                <button class="btn" data-topic="geography">🗺️ الجغرافيا</button>
+                <button class="btn" data-topic="literature">📚 الأدب</button>
+                <button class="btn" data-topic="technology">💻 التكنولوجيا</button>
+                <!-- ⬆️⬆️⬆️ يمكنك إضافة المزيد ⬆️⬆️⬆️ -->
+            </div>
+            
+            <div style="margin-top: 30px; text-align: center;">
+                <button class="btn special" id="randomTopicBtn">🎲 موضوع عشوائي</button>
+            </div>
+        </div>
+
+        <!-- شاشة اختيار الصعوبة -->
+        <div class="screen" id="difficultyScreen">
+            <h2 class="screen-title">⚡ اختر مستوى الصعوبة</h2>
+            <div class="btn-grid">
+                <button class="btn easy" data-difficulty="easy">😊 سهل</button>
+                <button class="btn medium" data-difficulty="medium">😐 متوسط</button>
+                <button class="btn hard" data-difficulty="hard">😰 صعب</button>
+            </div>
+            
+            <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 15px;">
+                <h4 style="color: #2c3e50; margin-bottom: 10px;">📝 معلومات المستويات:</h4>
+                <p style="color: #7f8c8d;">
+                    <strong>سهل:</strong> 30 ثانية لكل سؤال<br>
+                    <strong>متوسط:</strong> 20 ثانية لكل سؤال<br>
+                    <strong>صعب:</strong> 15 ثانية لكل سؤال<br>
+                </p>
+            </div>
+        </div>
+
+        <!-- شاشة اللعب -->
+        <div class="screen" id="gameScreen">
+            <div class="progress" id="progress">السؤال 1 من 10</div>
+            
+            <div class="timer-container">
+                <div class="timer-bar" id="timerBar"></div>
+            </div>
+            
+            <div class="question-box">
+                <div class="question" id="question">جاري تحميل السؤال...</div>
+            </div>
+            
+            <div class="choices-grid" id="choicesGrid">
+                <!-- الخيارات تضاف هنا جافاسكريبت -->
+            </div>
+            
+            <div class="game-tools">
+                <button class="tool-btn" id="hintBtn">💡 تلميح (3)</button>
+                <button class="tool-btn" id="skipBtn">⏭️ تخطي (2)</button>
+                <button class="tool-btn" id="lifebuoyBtn">🛟 إنقاذ (1)</button>
+            </div>
+            
+            <div class="game-info">
+                <div class="info-box">
+                    <div class="info-label">النقاط</div>
+                    <div class="info-value" id="score">0</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">أعلى نتيجة</div>
+                    <div class="info-value" id="highScore">0</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">الأسئلة</div>
+                    <div class="info-value" id="questionsCount">0/10</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">الدقة</div>
+                    <div class="info-value" id="accuracy">0%</div>
+                </div>
+            </div>
+            
+            <div class="combo-counter" id="comboCounter"></div>
+        </div>
+
+        <!-- شاشة النهاية -->
+        <div class="screen" id="endScreen">
+            <div class="end-screen-content">
+                <h2 class="screen-title">🎮 انتهت اللعبة!</h2>
+                
+                <div class="final-score" id="finalScore">0</div>
+                
+                <div class="result-details">
+                    <div class="detail-item">
+                        <span>عدد الأسئلة:</span>
+                        <strong id="endQuestions">0/10</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>الإجابات الصحيحة:</span>
+                        <strong id="endCorrect">0</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>الدقة:</span>
+                        <strong id="endAccuracy">0%</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>أعلى تتابع:</span>
+                        <strong id="endCombo">×0</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>الوقت المستخدم:</span>
+                        <strong id="endTime">0 ثانية</strong>
+                    </div>
+                </div>
+                
+                <div class="btn-grid">
+                    <button class="btn" id="playAgainBtn">🔄 لعب مرة أخرى</button>
+                    <button class="btn" id="shareBtn">📤 مشاركة النتيجة</button>
+                    <button class="btn" id="homeBtn">🏠 العودة للرئيسية</button>
+                </div>
+                
+                <div style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <p style="color: #7f8c8d; text-align: center;">
+                              🎯 حاول تحطيم رقمك القياسي!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+     <script>
+        // ===== بيانات اللعبة =====
+        // ⬇️⬇️⬇️ هنا تضيف أسئلتك ⬇️⬇️⬇️
+        const questionsDatabase = {
+            general: {
+                easy: [
+                    {
+                        question: "ما هي عاصمة مصر؟",
+                        choices: ["القاهرة", "الإسكندرية", "الجيزة", "بورسعيد"],
+                        answer: "القاهرة",
+                        hint: "تقع على ضفاف نهر النيل"
+                    }
+                    // أضف المزيد من الأسئلة هنا
+                ],
+                medium: [
+                    // أسئلة متوسطة الصعوبة
+                ],
+                hard: [
+                    // أسئلة صعبة
+                ]
+            },
+            science: {
+                easy: [
+                    {
+                        question: "ما هو أكبر كوكب في النظام الشمسي؟",
+                        choices: ["الأرض", "المريخ", "المشتري", "الزهرة"],
+                        answer: "المشتري",
+                        hint: "كوكب عملاق غازي"
+                    }
+                    // أضف المزيد
+                ]
+            }
+            // أضف مواضيع أخرى هنا
+        };
+
+        // ===== حالة اللعبة =====
+        let gameState = {
+            currentUser: null,
+            selectedTopic: null,
+            selectedDifficulty: null,
+            currentQuestionIndex: 0,
+            score: 0,
+            correctAnswers: 0,
+            totalQuestions: 5,
+            timer: 30,
+            timerInterval: null,
+            hintsRemaining: 3,
+            skipsRemaining: 2,
+            lifebuoysRemaining: 1,
+            comboCount: 0,
+            maxCombo: 0,
+            startTime: null,
+            totalTime: 0,
+            isSoundEnabled: true,
+            isDarkMode: false,
+            currentLevel: 1,
+            currentXP: 0,
+            xpToNextLevel: 100,
+            totalScore: 0,
+            highestScore: 0,
+            gamesPlayed: 0,
+            correctTotal: 0,
+            streakDays: 0,
+            lastPlayDate: null
+        };
+
+        // ===== عناصر DOM =====
+        const elements = {
+            // الشاشات
+            loginScreen: document.getElementById('loginScreen'),
+            topicScreen: document.getElementById('topicScreen'),
+            difficultyScreen: document.getElementById('difficultyScreen'),
+            gameScreen: document.getElementById('gameScreen'),
+            endScreen: document.getElementById('endScreen'),
+            
+            // القائمة
+            sideMenu: document.getElementById('sideMenu'),
+            overlay: document.getElementById('overlay'),
+            menuBtn: document.getElementById('menuBtn'),
+            
+            // معلومات المستخدم
+            userName: document.getElementById('userName'),
+            userLevel: document.getElementById('userLevel'),
+            userCoins: document.getElementById('userCoins'),
+            userAvatar: document.getElementById('userAvatar'),
+            
+            // نظام المستويات
+            levelDisplay: document.getElementById('levelDisplay'),
+            xpDisplay: document.getElementById('xpDisplay'),
+            xpBar: document.getElementById('xpBar'),
+            
+            // شاشة اللعب
+            progress: document.getElementById('progress'),
+            timerBar: document.getElementById('timerBar'),
+            question: document.getElementById('question'),
+            choicesGrid: document.getElementById('choicesGrid'),
+            score: document.getElementById('score'),
+            highScore: document.getElementById('highScore'),
+            questionsCount: document.getElementById('questionsCount'),
+            accuracy: document.getElementById('accuracy'),
+            comboCounter: document.getElementById('comboCounter'),
+            
+            // أزرار الأدوات
+            hintBtn: document.getElementById('hintBtn'),
+            skipBtn: document.getElementById('skipBtn'),
+            lifebuoyBtn: document.getElementById('lifebuoyBtn'),
+            
+            // شاشة النهاية
+            finalScore: document.getElementById('finalScore'),
+            endQuestions: document.getElementById('endQuestions'),
+            endCorrect: document.getElementById('endCorrect'),
+            endAccuracy: document.getElementById('endAccuracy'),
+            endCombo: document.getElementById('endCombo'),
+            endTime: document.getElementById('endTime'),
+            
+            // أزرار التحكم
+            playAgainBtn: document.getElementById('playAgainBtn'),
+            shareBtn: document.getElementById('shareBtn'),
+            homeBtn: document.getElementById('homeBtn'),
+            guestLoginBtn: document.getElementById('guestLoginBtn'),
+            googleLoginBtn: document.getElementById('googleLoginBtn'),
+            offlineBtn: document.getElementById('offlineBtn'),
+            randomTopicBtn: document.getElementById('randomTopicBtn'),
+            
+            // القائمة الجانبية
+            logoutBtn: document.getElementById('logoutBtn'),
+            menuProfile: document.getElementById('menuProfile'),
+            menuStats: document.getElementById('menuStats'),
+            menuAchievements: document.getElementById('menuAchievements'),
+            menuShop: document.getElementById('menuShop'),
+            menuFriends: document.getElementById('menuFriends'),
+            menuSettings: document.getElementById('menuSettings'),
+            menuHelp: document.getElementById('menuHelp'),
+            
+            // النوافذ المنبثقة
+            statsModal: document.getElementById('statsModal'),
+            closeStats: document.getElementById('closeStats'),
+            statLevel: document.getElementById('statLevel'),
+            statScore: document.getElementById('statScore'),
+            statHighScore: document.getElementById('statHighScore'),
+            statCorrect: document.getElementById('statCorrect'),
+            statStreak: document.getElementById('statStreak'),
+            
+            // الحاوية الرئيسية
+            gameContainer: document.getElementById('gameContainer')
+        };
+
+        // ===== تهيئة اللعبة =====
+        function initGame() {
+            loadGameState();
+            setupEventListeners();
+            updateUserDisplay();
+            checkDailyReward();
+            
+            // عرض شاشة تسجيل الدخول إذا لم يكن هناك مستخدم
+            if (!gameState.currentUser) {
+                showScreen('loginScreen');
+            } else {
+                showScreen('topicScreen');
+            }
+        }
+
+        // ===== إدارة الشاشات =====
+        function showScreen(screenId) {
+            // إخفاء كل الشاشات
+            Object.values(elements).forEach(element => {
+                if (element.classList && element.classList.contains('screen')) {
+                    element.classList.remove('active');
+                }
+            });
+            
+            // عرض الشاشة المطلوبة
+            elements[screenId]?.classList.add('active');
+        }
+
+        // ===== إدارة القائمة الجانبية =====
+        function toggleSideMenu() {
+            elements.sideMenu.classList.toggle('active');
+            elements.overlay.classList.toggle('active');
+            elements.gameContainer.classList.toggle('blurred');
+        }
+               // ===== إدارة حالة اللعبة =====
+        function loadGameState() {
+            try {
+                const savedState = localStorage.getItem('arabicQuizGameState');
+                if (savedState) {
+                    const parsed = JSON.parse(savedState);
+                    Object.assign(gameState, parsed);
+                }
+            } catch (e) {
+                console.log('تعذر تحميل حالة اللعبة، استخدام الحالة الافتراضية');
+            }
+        }
+
+        function saveGameState() {
+            try {
+                localStorage.setItem('arabicQuizGameState', JSON.stringify(gameState));
+            } catch (e) {
+                console.log('تعذر حفظ حالة اللعبة');
+            }
+        }
+
+        // ===== نظام المستويات =====
+        function updateLevelSystem(xpEarned) {
+            gameState.currentXP += xpEarned;
+            gameState.totalScore += xpEarned;
+            
+            while (gameState.currentXP >= gameState.xpToNextLevel) {
+                gameState.currentLevel++;
+                gameState.currentXP -= gameState.xpToNextLevel;
+                gameState.xpToNextLevel = Math.floor(gameState.xpToNextLevel * 1.3);
+                
+                // عرض إشعار الترقية
+                showNotification(`🎉 تهنئة! لقد وصلت للمستوى ${gameState.currentLevel}`, 'success');
+            }
+            
+            updateUserDisplay();
+            saveGameState();
+        }
+
+        // ===== عرض معلومات المستخدم =====
+        function updateUserDisplay() {
+            // تحديث القائمة الجانبية
+            if (gameState.currentUser) {
+                elements.userName.textContent = gameState.currentUser.name;
+                elements.userLevel.textContent = `المستوى: ${gameState.currentLevel}`;
+                elements.userCoins.textContent = `💰 ${gameState.totalScore} نقطة`;
+                
+                // تحديث الحروف الأولى في الأفاتار
+                const initials = gameState.currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                elements.userAvatar.textContent = initials || '👤';
+            }
+            
+            // تحديث شريط الخبرة
+            elements.levelDisplay.textContent = `المستوى: ${gameState.currentLevel}`;
+            const xpPercentage = (gameState.currentXP / gameState.xpToNextLevel) * 100;
+            elements.xpDisplay.textContent = `${gameState.currentXP}/${gameState.xpToNextLevel} XP`;
+            elements.xpBar.style.width = `${Math.min(xpPercentage, 100)}%`;
+            
+            // تحديث الإحصائيات
+            elements.statLevel.textContent = gameState.currentLevel;
+            elements.statScore.textContent = gameState.totalScore;
+            elements.statHighScore.textContent = gameState.highestScore;
+            elements.statCorrect.textContent = gameState.correctTotal;
+            elements.statStreak.textContent = gameState.streakDays;
+        }
+
+        // ===== المكافآت اليومية =====
+        function checkDailyReward() {
+            const today = new Date().toDateString();
+            
+            if (gameState.lastPlayDate !== today) {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                if (gameState.lastPlayDate === yesterday.toDateString()) {
+                    gameState.streakDays++;
+                } else {
+                    gameState.streakDays = 1;
+                }
+                
+                gameState.lastPlayDate = today;
+                
+                // منح مكافأة
+                const reward = 50 * gameState.streakDays;
+                gameState.totalScore += reward;
+                
+                showNotification(`🎁 مكافأة يومية! +${reward} نقطة (تتابع: ${gameState.streakDays} يوم)`, 'success');
+                saveGameState();
+                updateUserDisplay();
+            }
+        }
+
+        // ===== بدء لعبة جديدة =====
+        function startNewGame() {
+            // إعادة تعيين حالة اللعبة
+            gameState.currentQuestionIndex = 0;
+            gameState.score = 0;
+            gameState.correctAnswers = 0;
+            gameState.comboCount = 0;
+            gameState.maxCombo = 0;
+            gameState.hintsRemaining = 3;
+            gameState.skipsRemaining = 2;
+            gameState.lifebuoysRemaining = 1;
+            gameState.startTime = Date.now();
+            gameState.totalTime = 0;
+            
+            // تحديث العرض
+            updateGameDisplay();
+            showScreen('gameScreen');
+            loadNextQuestion();
+        }
+
+        // ===== تحميل الأسئلة =====
+        function loadNextQuestion() {
+            if (gameState.currentQuestionIndex >= gameState.totalQuestions) {
+                endGame();
+                return;
+            }
+            
+            // البحث عن سؤال من الموضوع والمستوى المختار
+            const topicQuestions = questionsDatabase[gameState.selectedTopic];
+            if (!topicQuestions) {
+                showNotification('⚠️ لم يتم العثور على أسئلة لهذا الموضوع', 'warning');
+                showScreen('topicScreen');
+                return;
+            }
+            
+            const difficultyQuestions = topicQuestions[gameState.selectedDifficulty];
+            if (!difficultyQuestions || difficultyQuestions.length === 0) {
+                showNotification('⚠️ لم يتم العثور على أسئلة لهذا المستوى', 'warning');
+                showScreen('difficultyScreen');
+                return;
+            }
+            
+            // اختيار سؤال عشوائي
+            const randomIndex = Math.floor(Math.random() * difficultyQuestions.length);
+            const currentQuestion = difficultyQuestions[randomIndex];
+            
+            // عرض السؤال
+            displayQuestion(currentQuestion);
+            
+            // بدء المؤقت
+            startTimer();
+        }
+
+        // ===== عرض السؤال =====
+        function displayQuestion(questionData) {
+            // تحديث التقدم
+            elements.progress.textContent = `السؤال ${gameState.currentQuestionIndex + 1} من ${gameState.totalQuestions}`;
+            
+            // عرض السؤال
+            elements.question.textContent = questionData.question;
+            
+            // مسح الخيارات السابقة
+            elements.choicesGrid.innerHTML = '';
+            
+            // خلط الخيارات عشوائياً
+            const shuffledChoices = [...questionData.choices].sort(() => Math.random() - 0.5);
+            
+            // إنشاء أزرار الخيارات
+            shuffledChoices.forEach(choice => {
+                const button = document.createElement('button');
+                button.className = 'choice-btn';
+                button.textContent = choice;
+                button.onclick = () => checkAnswer(choice, questionData.answer, button);
+                elements.choicesGrid.appendChild(button);
+            })
+                  // تحديث أزرار الأدوات
+            elements.hintBtn.textContent = `💡 تلميح (${gameState.hintsRemaining})`;
+            elements.hintBtn.disabled = gameState.hintsRemaining === 0;
+            
+            elements.skipBtn.textContent = `⏭️ تخطي (${gameState.skipsRemaining})`;
+            elements.skipBtn.disabled = gameState.skipsRemaining === 0;
+            
+            elements.lifebuoyBtn.textContent = `🛟 إنقاذ (${gameState.lifebuoysRemaining})`;
+            elements.lifebuoyBtn.disabled = gameState.lifebuoysRemaining === 0;
+            
+            // إعادة تعيين المؤقت بناءً على الصعوبة
+            resetTimer();
+        }
+
+        // ===== التحقق من الإجابة =====
+        function checkAnswer(selectedAnswer, correctAnswer, button) {
+            // إيقاف المؤقت
+            stopTimer();
+            
+            // تعطيل كل الأزرار
+            document.querySelectorAll('.choice-btn').forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+            
+            if (selectedAnswer === correctAnswer) {
+                // الإجابة صحيحة
+                button.classList.add('correct');
+                
+                // حساب النقاط
+                const timeBonus = Math.floor(gameState.timer / 5);
+                const comboBonus = gameState.comboCount * 10;
+                const basePoints = 100;
+                const pointsEarned = basePoints + timeBonus + comboBonus;
+                
+                gameState.score += pointsEarned;
+                gameState.correctAnswers++;
+                gameState.correctTotal++;
+                gameState.comboCount++;
+                
+                if (gameState.comboCount > gameState.maxCombo) {
+                    gameState.maxCombo = gameState.comboCount;
+                }
+                
+                // عرض التقدير
+                elements.comboCounter.textContent = gameState.comboCount > 1 ? 
+                    `✨ تتابع صحيح! ×${gameState.comboCount}` : '';
+                
+                showNotification(`✅ صحيح! +${pointsEarned} نقطة`, 'success');
+                createConfetti();
+                
+                // تحديث نظام المستويات
+                updateLevelSystem(pointsEarned);
+            } else {
+                // الإجابة خاطئة
+                button.classList.add('incorrect');
+                gameState.comboCount = 0;
+                elements.comboCounter.textContent = '';
+                
+                showNotification('❌ إجابة خاطئة', 'warning');
+                
+                // اهتزاز الشاشة
+                elements.gameContainer.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    elements.gameContainer.style.animation = '';
+                }, 500);
+            }
+            
+            // تحديث العرض
+            updateGameDisplay();
+            
+            // الانتقال للسؤال التالي بعد تأخير
+            setTimeout(() => {
+                gameState.currentQuestionIndex++;
+                loadNextQuestion();
+            }, 2000);
+        }
+
+        // ===== إدارة المؤقت =====
+        function resetTimer() {
+            // تعيين الوقت بناءً على الصعوبة
+            switch (gameState.selectedDifficulty) {
+                case 'easy': gameState.timer = 30; break;
+                case 'medium': gameState.timer = 20; break;
+                case 'hard': gameState.timer = 15; break;
+                default: gameState.timer = 30;
+            }
+            
+            elements.timerBar.style.width = '100%';
+            elements.timerBar.style.background = 'linear-gradient(90deg, #3498db, #2980b9)';
+        }
+
+        function startTimer() {
+            stopTimer(); // إيقاف أي مؤقت سابق
+            
+            let timeLeft = gameState.timer;
+            const timerWidth = elements.timerBar.parentElement.offsetWidth;
+            
+            gameState.timerInterval = setInterval(() => {
+                timeLeft--;
+                const percentage = (timeLeft / gameState.timer) * 100;
+                elements.timerBar.style.width = `${percentage}%`;
+                
+                // تغيير اللون مع اقتراب الوقت للنهاية
+                if (percentage < 30) {
+                    elements.timerBar.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
+                } else if (percentage < 60) {
+                    elements.timerBar.style.background = 'linear-gradient(90deg, #f39c12, #e67e22)';
+                }
+                
+                if (timeLeft <= 0) {
+                    stopTimer();
+                    timeUp();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+                gameState.timerInterval = null;
+            }
+        }
+
+        function timeUp() {
+            // تعطيل كل الأزرار
+            document.querySelectorAll('.choice-btn').forEach(btn => {
+                btn.disabled = true;
+            });
+            
+            // عرض الإجابة الصحيحة
+            showNotification('⏰ انتهى الوقت!', 'warning');
+            
+            // الانتقال للسؤال التالي
+            setTimeout(() => {
+                gameState.currentQuestionIndex++;
+                loadNextQuestion();
+            }, 1500);
+        }
+
+        // ===== تحديث عرض اللعبة =====
+        function updateGameDisplay() {
+            // تحديث النقاط
+            elements.score.textContent = gameState.score;
+            
+            // تحديث أعلى نتيجة
+            if (gameState.score > gameState.highestScore) {
+                gameState.highestScore = gameState.score;
+            }
+            elements.highScore.textContent = gameState.highestScore;
+            
+            // تحديث عدد الأسئلة والدقة
+            elements.questionsCount.textContent = `${gameState.currentQuestionIndex}/${gameState.totalQuestions}`;
+            
+            const accuracy = gameState.currentQuestionIndex > 0 ? 
+                Math.round((gameState.correctAnswers / gameState.currentQuestionIndex) * 100) : 0;
+            elements.accuracy.textContent = `${accuracy}%`;
+        }
+
+        // ===== نهاية اللعبة =====
+        function endGame() {
+            stopTimer();
+            
+            // حساب الوقت الإجمالي
+            const endTime = Date.now();
+            gameState.totalTime = Math.floor((endTime - gameState.startTime) / 1000);
+            
+            // حساب الدقة النهائية
+            const finalAccuracy = Math.round((gameState.correctAnswers / gameState.totalQuestions) * 100);
+            
+            // تحديث شاشة النهاية
+            elements.finalScore.textContent = gameState.score;
+            elements.endQuestions.textContent = `${gameState.totalQuestions}/${gameState.totalQuestions}`;
+            elements.endCorrect.textContent = gameState.correctAnswers;
+            elements.endAccuracy.textContent = `${finalAccuracy}%`;
+            elements.endCombo.textContent = `×${gameState.maxCombo}`;
+            elements.endTime.textContent = `${gameState.totalTime} ثانية`;
+            
+            // حفظ الإحصائيات
+            gameState.gamesPlayed++;
+            saveGameState();
+            
+            // عرض شاشة النهاية
+            showScreen('endScreen');
+            
+            // عرض الكونفيتي إذا كان الأداء جيداً
+            if (finalAccuracy >= 80) {
+                createConfetti(50);
+            }
+        }
+       
+        // ===== أدوات المساعدة =====
+        function useHint() {
+            if (gameState.hintsRemaining > 0) {
+                gameState.hintsRemaining--;
+                elements.hintBtn.textContent = `💡 تلميح (${gameState.hintsRemaining})`;
+                elements.hintBtn.disabled = gameState.hintsRemaining === 0;
+                
+                // البحث عن السؤال الحالي وعرض التلميح
+                // (هذا يتطلب تعديل هيكل البيانات)
+                showNotification('💡 استخدمت تلميحاً واحداً', 'warning');
+            }
+        }
+
+        function useSkip() {
+            if (gameState.skipsRemaining > 0) {
+                gameState.skipsRemaining--;
+                elements.skipBtn.textContent = `⏭️ تخطي (${gameState.skipsRemaining})`;
+                elements.skipBtn.disabled = gameState.skipsRemaining === 0;
+                
+                // تخطي السؤال الحالي
+                gameState.currentQuestionIndex++;
+                loadNextQuestion();
+                showNotification('⏭️ تخطيت سؤالاً', 'warning');
+            }
+        }
+
+        function useLifebuoy() {
+            if (gameState.lifebuoysRemaining > 0) {
+                gameState.lifebuoysRemaining--;
+                elements.lifebuoyBtn.textContent = `🛟 إنقاذ (${gameState.lifebuoysRemaining})`;
+                elements.lifebuoyBtn.disabled = gameState.lifebuoysRemaining === 0;
+                
+                // إزالة إجابتين خاطئتين
+                const choiceButtons = document.querySelectorAll('.choice-btn:not(.correct)');
+                let removed = 0;
+                
+                choiceButtons.forEach(btn => {
+                    if (removed < 2 && !btn.textContent.includes('❌')) {
+                        btn.textContent = '❌ ' + btn.textContent;
+                        btn.disabled = true;
+                        removed++;
+                    }
+                });
+                
+                showNotification('🛟 استخدمت طوق إنقاذ', 'warning');
+            }
+        }
+
+        // ===== إشعارات =====
+        function showNotification(message, type = 'info') {
+            // إنصراف الإشعار السابق
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // إنشاء إشعار جديد
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = type === 'success' ? '20px' : 'auto';
+            notification.style.left = type === 'warning' ? '20px' : 'auto';
+            notification.style.background = type === 'success' ? '#2ecc71' : '#f39c12';
+            notification.style.color = 'white';
+            notification.style.padding = '15px 25px';
+            notification.style.borderRadius = '10px';
+            notification.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+            notification.style.zIndex = '1002';
+            notification.style.animation = 'slideIn 0.5s ease';
+            
+            document.body.appendChild(notification);
+            
+            // إزالة الإشعار بعد 3 ثواني
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.animation = 'slideIn 0.5s ease reverse';
+                    setTimeout(() => notification.remove(), 500);
+                }
+            }, 3000);
+        }
+
+        // ===== الكونفيتي =====
+        function createConfetti(count = 30) {
+            const colors = ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6'];
+            
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = `${Math.random() * 100}vw`;
+                    confetti.style.top = '-10px';
+                    confetti.style.width = `${Math.random() * 10 + 5}px`;
+                    confetti.style.height = confetti.style.width;
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                    confetti.style.animationDuration = `${Math.random() * 2 + 1}s`;
+                    
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 30);
+            }
+        }
+
+        // ===== مستمعي الأحداث =====
+        function setupEventListeners() {
+            // القائمة الجانبية
+            elements.menuBtn.addEventListener('click', toggleSideMenu);
+            elements.overlay.addEventListener('click', toggleSideMenu);
+            elements.logoutBtn.addEventListener('click', logout);
+            
+            // القائمة الجانبية - العناصر
+            elements.menuStats.addEventListener('click', () => {
+                toggleSideMenu();
+                elements.statsModal.classList.add('active');
+                elements.overlay.classList.add('active');
+            });
+            
+            elements.closeStats.addEventListener('click', () => {
+                elements.statsModal.classList.remove('active');
+                elements.overlay.classList.remove('active');
+            });
+            
+            // تسجيل الدخول
+            elements.guestLoginBtn.addEventListener('click', () => {
+                gameState.currentUser = {
+                    name: `ضيف ${Math.floor(Math.random() * 1000)}`,
+                    type: 'guest'
+                };
+                saveGameState();
+                updateUserDisplay();
+                showScreen('topicScreen');
+            });
+            
+            elements.googleLoginBtn.addEventListener('click', () => {
+                // يمكنك إضافة تسجيل الدخول الحقيقي هنا
+                gameState.currentUser = {
+                    name: "مستخدم Google",
+                    email: "user@example.com",
+                    type: 'google'
+                };
+                saveGameState();
+                updateUserDisplay();
+                showScreen('topicScreen');
+                showNotification('✅ تم تسجيل الدخول بنجاح', 'success');
+            });
+            
+            elements.offlineBtn.addEventListener('click', () => {
+                gameState.currentUser = { name: 'لاعب بدون إنترنت', type: 'offline' };
+                saveGameState();
+                updateUserDisplay();
+                showScreen('topicScreen');
+            });
+            
+            // اختيار الموضوع
+            document.querySelectorAll('#topicScreen .btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    gameState.selectedTopic = e.target.dataset.topic;
+                    showScreen('difficultyScreen');
+                });
+            });
+            
+            elements.randomTopicBtn.addEventListener('click', () => {
+                const topics = Object.keys(questionsDatabase);
+                if (topics.length > 0) {
+                    gameState.selectedTopic = topics[Math.floor(Math.random() * topics.length)];
+                    showScreen('difficultyScreen');
+                }
+            });
+            
+            // اختيار الصعوبة
+            document.querySelectorAll('#difficultyScreen .btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    gameState.selectedDifficulty = e.target.dataset.difficulty;
+                    gameState.totalQuestions = 10; // يمكنك تغيير هذا
+                    startNewGame();
+                });
+            });
+            
+            // أزرار الأدوات
+            elements.hintBtn.addEventListener('click', useHint);
+            elements.skipBtn.addEventListener('click', useSkip);
+            elements.lifebuoyBtn.addEventListener('click', useLifebuoy);
+            
+            // شاشة النهاية
+            elements.playAgainBtn.addEventListener('click', () => {
+                startNewGame();
+            });
+            
+            elements.shareBtn.addEventListener('click', () => {
+                const shareText = `🎮 سجلت ${gameState.score} نقطة في لعبة الألغاز العربية! جربها الآن!`;
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'لعبة الألغاز العربية',
+                        text: shareText
+                    });
+                } else {
+                    navigator.clipboard.writeText(shareText);
+                    showNotification('📋 تم نسخ النتيجة إلى الحافظة!', 'success');
+                }
+            });
+            
+            elements.homeBtn.addEventListener('click', () => {
+                showScreen('topicScreen');
+            });
+            
+            // الوضع الداكن/الفاتح
+            const darkModeToggle = document.createElement('button');
+            darkModeToggle.style.position = 'fixed';
+            darkModeToggle.style.bottom = '20px';
+            darkModeToggle.style.left = '20px';
+            darkModeToggle.style.background = '#2c3e50';
+            darkModeToggle.style.color = 'white';
+            darkModeToggle.style.border = 'none';
+            darkModeToggle.style.borderRadius = '50%';
+            darkModeToggle.style.width = '50px';
+            darkModeToggle.style.height = '50px';
+            darkModeToggle.style.fontSize = '20px';
+            darkModeToggle.style.cursor = 'pointer';
+            darkModeToggle.style.zIndex = '100';
+            darkModeToggle.textContent = gameState.isDarkMode ? '☀️' : '🌙';
+            
+            darkModeToggle.addEventListener('click', () => {
+                gameState.isDarkMode = !gameState.isDarkMode;
+                document.body.classList.toggle('dark-mode', gameState.isDarkMode);
+                darkModeToggle.textContent = gameState.isDarkMode ? '☀️' : '🌙';
+                saveGameState();
+            });
+            
+            document.body.appendChild(darkModeToggle);
+            
+            // تطبيق الوضع الداكن إذا كان مفعلاً
+            if (gameState.isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
+                                                   }
+       ===== تسجيل الخروج =====
+        function logout() {
+            if (confirm('هل تريد تسجيل الخروج؟')) {
+                gameState.currentUser = null;
+                saveGameState();
+                toggleSideMenu();
+                showScreen('loginScreen');
+                showNotification('تم تسجيل الخروج بنجاح', 'success');
+            }
+        }
+
+        // ===== بدء اللعبة عند تحميل الصفحة =====
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
 </body>
 </html>
+```
